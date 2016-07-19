@@ -10,6 +10,9 @@ namespace big {
 using digit = unsigned int;
 using long_digit = unsigned long;
 
+static_assert(sizeof(long_digit) == 2 * sizeof(digit), 
+              "long_digit must be twice as long as digit");
+
 /*
  * The class contains positive integer value of arbitrary length. The value is
  * containing as a sequence of digits in base-2^32 system.
@@ -25,7 +28,7 @@ class big_uint {
 
 public:
     big_uint();
-    big_uint(digit d);
+    explicit big_uint(digit d);
     big_uint(std::initializer_list<digit> digits);
     big_uint(const std::string & num);
     big_uint(std::string::const_iterator begin, std::string::const_iterator end);
@@ -41,6 +44,18 @@ public:
     big_uint operator++(int);
     big_uint operator--(int);
 
+    friend big_uint operator+(const big_uint & lhs, digit rhs);
+    friend big_uint operator-(const big_uint & lhs, digit rhs);
+    friend big_uint operator*(const big_uint & lhs, digit rhs);
+    friend big_uint operator/(const big_uint & lhs, digit rhs);
+    friend digit operator%(const big_uint & lhs, digit rhs);
+
+    friend big_uint operator+(digit lhs, const big_uint & rhs);
+    friend digit operator-(digit lhs, const big_uint & rhs);
+    friend big_uint operator*(digit lhs, const big_uint & rhs);
+    friend digit operator/(digit lhs, const big_uint & rhs);
+    friend digit operator%(digit lhs, const big_uint & rhs);
+
     big_uint & operator+=(digit d);
     big_uint & operator-=(digit d);
     big_uint & operator*=(digit d);
@@ -49,6 +64,12 @@ public:
 
     static big_uint div(const big_uint & num, digit denom, digit & rem);
     static big_uint div(const big_uint & num, digit denom);
+
+    big_uint operator+(const big_uint & x);
+    big_uint operator-(const big_uint & x);
+    big_uint operator*(const big_uint & x);
+    big_uint operator/(const big_uint & x);
+    big_uint operator%(const big_uint & x);
 
     big_uint & operator+=(const big_uint & x);
     big_uint & operator-=(const big_uint & x);
@@ -66,32 +87,31 @@ public:
     bool operator<=(const big_uint & rhs) const;
     bool operator>=(const big_uint & rhs) const;
 
-    //friend bool operator<(double lhs, const big_uint & rhs);
-    //friend bool operator>(double lhs, const big_uint & rhs);
-    //friend bool operator<=(double lhs, const big_uint & rhs);
-    //friend bool operator>=(double lhs, const big_uint & rhs);
-    //friend bool operator<(const big_uint & lhs, double rhs);
-    //friend bool operator>(const big_uint & lhs, double rhs);
-    //friend bool operator<=(const big_uint & lhs, double rhs);
-    //friend bool operator>=(const big_uint & lhs, double rhs);
-
     friend bool operator<(long_digit lhs, const big_uint & rhs);
     friend bool operator>(long_digit lhs, const big_uint & rhs);
     friend bool operator<=(long_digit lhs, const big_uint & rhs);
     friend bool operator>=(long_digit lhs, const big_uint & rhs);
+    friend bool operator==(long_digit lhs, const big_uint & rhs);
+    friend bool operator!=(long_digit lhs, const big_uint & rhs);
     friend bool operator<(const big_uint & lhs, long_digit rhs);
     friend bool operator>(const big_uint & lhs, long_digit rhs);
     friend bool operator<=(const big_uint & lhs, long_digit rhs);
     friend bool operator>=(const big_uint & lhs, long_digit rhs);
+    friend bool operator==(const big_uint & lhs, long_digit rhs);
+    friend bool operator!=(const big_uint & lhs, long_digit rhs);
 
     friend bool operator<(digit lhs, const big_uint & rhs);
     friend bool operator>(digit lhs, const big_uint & rhs);
     friend bool operator<=(digit lhs, const big_uint & rhs);
     friend bool operator>=(digit lhs, const big_uint & rhs);
+    friend bool operator==(digit lhs, const big_uint & rhs);
+    friend bool operator!=(digit lhs, const big_uint & rhs);
     friend bool operator<(const big_uint & lhs, digit rhs);
     friend bool operator>(const big_uint & lhs, digit rhs);
     friend bool operator<=(const big_uint & lhs, digit rhs);
     friend bool operator>=(const big_uint & lhs, digit rhs);
+    friend bool operator==(const big_uint & lhs, digit rhs);
+    friend bool operator!=(const big_uint & lhs, digit rhs);
 
     //big_uint pow(long e) const;
     //big_uint pow_mod(long e, big_uint mod) const;

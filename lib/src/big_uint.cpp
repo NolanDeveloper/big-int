@@ -59,7 +59,7 @@ big_uint & big_uint::operator++() {
 big_uint & big_uint::operator--() {
     if (_digits.size() == 1 && _digits[0] == 0)
         throw logic_error("Attempt to decrement zero.");
-    if (*this == 1) {
+    if (*this == 1u) {
         _digits[0] = 0;
         return *this;
     }
@@ -82,8 +82,121 @@ big_uint big_uint::operator--(int) {
     return t;
 }
 
+big_uint operator+(const big_uint & lhs, digit rhs) {
+    if (rhs == 0u) 
+        return lhs;
+    deque<digit> res;
+    auto prev = lhs._digits.begin();
+    auto it   = prev + 1;
+    auto end  = lhs._digits.end();
+    res.push_back(*prev + rhs);
+    if (res.back() < rhs) {
+        if (it == end) {
+            res.push_back(1);
+            return { res };
+        } 
+        res.push_back(*it + 1);
+        prev = it; 
+        ++it;
+    }
+    while (*prev == numeric_limits<digit>::max() && it != end) {
+        res.push_back(*it + 1);
+        prev = it; 
+        ++it;
+    }
+    if (*prev == numeric_limits<digit>::max() && it == end) 
+        res.push_back(1);
+    else
+        copy(it, end, back_inserter(res));
+    return { res };
+}
+
+big_uint operator-(const big_uint & lhs, digit rhs) {
+    if (lhs < rhs)
+        throw logic_error("Minuend must be greater than subtrahend.");
+    deque<digit> res;
+    auto prev = lhs._digits.begin();
+    auto it   = prev + 1;
+    auto end  = lhs._digits.end();
+    res.push_back(*prev - rhs);
+    if (res.back() > *prev) {
+        res.push_back(*it - 1);
+        prev = it; 
+        ++it;
+    }
+    while (res.back() == numeric_limits<digit>::max() && it != end) {
+        res.push_back(*it - 1);
+        prev = it; 
+        ++it;
+    }
+    if (res.size() != 1 && res.back() == 0) 
+        res.pop_back();
+    return { res };
+}
+
+big_uint operator*(const big_uint & lhs, digit rhs) {
+    if (rhs == 0u || lhs == 0u) 
+        return { 0u };
+    deque<digit> res;
+    digit carry = 0;
+    long_digit ld;
+    auto it = lhs._digits.begin();
+    auto end = lhs._digits.end();
+    while (it != end) {
+        ld = (long_digit) rhs * *it + carry;
+        res.push_back(ld);
+        carry = ld >> (sizeof(digit) * 8);
+        ++it;
+    }
+    if (carry) 
+        res.push_back(carry);
+    return { res };
+}
+
+big_uint operator/(const big_uint & lhs, digit rhs) {
+    if (rhs == 0) 
+        throw logic_error("Division by zero.");
+    return big_uint::div(lhs, rhs);
+}
+
+digit operator%(const big_uint & lhs, digit rhs) {
+    if (rhs == 0) 
+        throw logic_error("Division by zero.");
+    digit rem;
+    big_uint::div(lhs, rhs, rem);
+    return rem;
+}
+
+big_uint operator+(digit lhs, const big_uint & rhs) {
+    return rhs + lhs;
+}
+
+digit operator-(digit lhs, const big_uint & rhs) {
+    if (lhs < rhs)
+        throw logic_error("Minuend must be greater than subtrahend");
+    return lhs - rhs._digits[0];
+}
+
+big_uint operator*(digit lhs, const big_uint & rhs) {
+    return rhs * lhs;
+}
+
+digit operator/(digit lhs, const big_uint & rhs) {
+    if (rhs == 0u) 
+        throw logic_error("Division by zero.");
+    if (rhs > lhs) return 0;
+    return lhs / rhs._digits[0];
+}
+
+digit operator%(digit lhs, const big_uint & rhs) {
+    if (rhs == 0u) 
+        throw logic_error("Division by zero.");
+    if (rhs > lhs) return lhs;
+    return lhs % rhs._digits[0];
+}
+
 big_uint & big_uint::operator+=(digit d) {
-    if (*this == 0) {
+    if (*this == 0u) {
         _digits[0] = d;
         return *this;
     }
@@ -129,7 +242,7 @@ big_uint & big_uint::operator-=(digit d) {
 }
 
 big_uint & big_uint::operator*=(digit d) {
-    if (*this == 0) return *this;
+    if (*this == 0u) return *this;
     if (d == 0) {
         _digits.resize(1);
         _digits[0] = 0;
@@ -167,7 +280,7 @@ big_uint big_uint::div(const big_uint & num, digit denom, digit & rem) {
     if (denom == 0) throw logic_error("Division by zero.");
     if (num < denom) {
         rem = num._digits[0];
-        return 0;
+        return { 0u };
     }
     auto it  = num._digits.rbegin();
     auto end = num._digits.rend();
@@ -188,12 +301,129 @@ big_uint big_uint::div(const big_uint & num, digit denom, digit & rem) {
         ++it;
     }
     rem = x;
-    return { move(quot) };
+    return { quot };
 }
 
 big_uint big_uint::div(const big_uint & num, digit denom) {
     digit rem;
     return div(num, denom, rem);
+}
+
+big_uint big_uint::operator+(const big_uint & x) {
+    deque<digit> res;
+    auto prev  = _digits.begin();
+    auto it    = prev + 1;
+    auto end   = _digits.end();
+    auto _prev = x._digits.begin();
+    auto _it   = _prev + 1;
+    auto _end  = x._digits.end();
+    long_digit t = static_cast<long_digit>(*prev) + *_prev;
+    res.push_back(t);
+    while (it != end && _it != _end) {
+        t = static_cast<long_digit>(*it) + *_it + (t >> 8 * sizeof(digit));
+        res.push_back(t);
+        prev  = it;
+        _prev = _it;
+        ++it; 
+        ++_it;
+    }
+    if (_it == _end) { 
+        if (t >> 8 * sizeof(digit)) {
+            if (it == end) {
+                res.push_back(1);
+            } else {
+                res.push_back(*it + 1);
+                prev = it; 
+                ++it;
+                while (it != end && *prev == 0) {
+                    res.push_back(*it + 1);
+                    prev = it; 
+                    ++it;
+                }
+                if (it == end && *prev == 0) 
+                    res.push_back(1);
+            }
+        }
+    } else { // if (it == end)
+        res.push_back(*_it + (t >> 8 * sizeof(digit)));
+        _prev = _it; 
+        ++_it;
+        while (_it != _end) {
+            res.push_back(*_it + (_digits.back() < *_prev));
+            _prev = _it;
+            ++_it;
+        }
+        if (res.back() < *_prev) 
+            res.push_back(1);
+    }
+    return { res };
+}
+
+big_uint big_uint::operator-(const big_uint & x) {
+    if (*this < x)
+        throw logic_error("Minuend must be greater than subtrahend.");
+    deque<digit> res;
+    size_t msd = 0; // position of last non zero digit + 1 
+    auto prev  = _digits.begin();
+    auto it    = prev + 1;
+    auto end   = _digits.end();
+    auto _prev = x._digits.begin();
+    auto _it   = _prev + 1;
+    auto _end  = x._digits.end();
+    bool carry = *prev < *_prev;
+    res.push_back(*prev - *_prev);
+    while (_it != _end) {
+        res.push_back(*it - *_it - carry);
+        carry = *it < *_it || (carry && *it == *_it);
+        if (res.back()) 
+            msd = res.size();
+        prev = it; 
+        ++it;      
+        _prev = _it;
+        ++_it;
+    }
+    if (carry) {
+        res.push_back(*it - 1);
+        if (res.back()) 
+            msd = res.size();
+        prev = it;
+        ++it;
+    }
+    while (*prev == 0) {
+        res.push_back(*it - 1);
+        if (res.back()) 
+            msd = res.size();
+        prev = it;
+        ++it;
+    }
+    if (it != end) 
+        return { res };
+    res.erase(res.begin() + msd, res.end());
+    return { res };
+}
+
+big_uint big_uint::operator*(const big_uint & x) {
+    if (*this == 1u) return x;
+    big_uint res;
+    big_uint t;
+    size_t s = 0;
+    for (digit d : x._digits) {
+        t = *this;
+        t *= d;
+        res.add_with_shift(t, s);
+        ++s;
+    }
+    return res;
+}
+
+big_uint big_uint::operator/(const big_uint & x) {
+    return div(*this, x);
+}
+
+big_uint big_uint::operator%(const big_uint & x) {
+    big_uint rem;
+    div(*this, x, rem);
+    return rem;
 }
 
 big_uint & big_uint::operator+=(const big_uint & x) {
@@ -238,10 +468,8 @@ big_uint & big_uint::operator+=(const big_uint & x) {
 }
 
 big_uint & big_uint::operator-=(const big_uint & x) { 
-    if (*this < x) {
-        cout << *this << "\n" << x << endl;
+    if (*this < x)
         throw logic_error("Minuend must be greater than subtrahend.");
-    }
     auto prev  = _digits.begin();
     auto it    = prev + 1;
     auto end   = _digits.end();
@@ -278,7 +506,7 @@ big_uint & big_uint::operator-=(const big_uint & x) {
 }
 
 void big_uint::add_with_shift(const big_uint & x, size_t s) {
-    if (x == 0) return;
+    if (x == 0u) return;
     if (_digits.size() < s) _digits.resize(s);
     auto prev  = _digits.begin() + s;
     auto it    = prev + 1;
@@ -320,7 +548,8 @@ void big_uint::add_with_shift(const big_uint & x, size_t s) {
 }
 
 big_uint & big_uint::operator*=(const big_uint & x) {
-    if (*this == 1) return *this = x;
+    if (*this == 1u) 
+        return *this = x;
     big_uint res;
     big_uint t;
     size_t s = 0;
@@ -345,19 +574,19 @@ big_uint & big_uint::operator%=(const big_uint & x) {
 
 big_uint big_uint::div(const big_uint & dividend, const big_uint & divisor, 
                        big_uint & reminder) {
-    if (divisor == 0) throw logic_error("Division by zero.");
+    if (divisor == 0u) throw logic_error("Division by zero.");
     if (dividend < divisor) {
         reminder = dividend;
-        return 0;
+        return { };
     }
-    if (divisor == 1) {
-        reminder = 0;
+    if (divisor == 1u) {
+        reminder = { };
         return dividend;
     }
     auto it = dividend._digits.rbegin();
     auto end = dividend._digits.rend();
-    big_uint quot = 1;
-    reminder = 0;
+    big_uint quot{ 1u };
+    reminder = { };
     int i = 8 * sizeof(digit) - 1;
     while (true) {
         for (; i >= 0 && reminder < divisor; --i) {
@@ -455,6 +684,18 @@ bool operator>=(long_digit lhs, const big_uint & rhs) {
     return lhs >= right;
 }
 
+bool operator==(long_digit lhs, const big_uint & rhs) {
+    if (rhs._digits.size() > 2) return false;
+    long_digit right = (rhs._digits.size() == 1 ? 0 : rhs._digits[1]);
+    right <<= 8 * sizeof(digit);
+    right |= rhs._digits[0];
+    return lhs == right;
+}
+
+bool operator!=(long_digit lhs, const big_uint & rhs) {
+    return !(lhs == rhs);
+}
+
 bool operator<(const big_uint & lhs, long_digit rhs) {
     return rhs > lhs;
 }
@@ -469,6 +710,14 @@ bool operator<=(const big_uint & lhs, long_digit rhs) {
 
 bool operator>=(const big_uint & lhs, long_digit rhs) {
     return rhs <= lhs;
+}
+
+bool operator==(const big_uint & lhs, long_digit rhs) {
+    return lhs == rhs;
+}
+
+bool operator!=(const big_uint & lhs, long_digit rhs) {
+    return !(lhs == rhs);
 }
 
 bool operator<(digit lhs, const big_uint & rhs) {
@@ -487,6 +736,14 @@ bool operator>=(digit lhs, const big_uint & rhs) {
     return rhs._digits.size() == 1 && lhs >= rhs._digits[0];
 }
 
+bool operator==(digit lhs, const big_uint & rhs) {
+    return rhs._digits.size() == 1 && rhs._digits[0] == lhs;
+}
+
+bool operator!=(digit lhs, const big_uint & rhs) {
+    return !(lhs == rhs);
+}
+
 bool operator<(const big_uint & lhs, digit rhs) {
     return rhs > lhs;
 }
@@ -503,20 +760,27 @@ bool operator>=(const big_uint & lhs, digit rhs) {
     return rhs <= lhs;
 }
 
+bool operator==(const big_uint & lhs, digit rhs) {
+    return rhs == lhs;
+}
+
+bool operator!=(const big_uint & lhs, digit rhs) {
+    return !(lhs == rhs);
+}
+
 bool big_uint::satisfies_invariant() const {
     return _digits.size() == 1 ||
         (_digits.size() > 1 && _digits.back() != 0);
 }
 
 std::ostream & operator<<(std::ostream & os, big_uint x) {
-    static const char * digits = "0123456789ABCDEF";
-    if (x == 0)
+    if (x == 0u)
         return os << '0';
     vector<char> result;
     digit rem;
-    while (x != 0) {
+    while (x != 0u) {
         x /= big_uint::div(x, 10, rem);
-        result.push_back(digits[rem]);
+        result.push_back('0' + rem);
     }
     copy(result.rbegin(), result.rend(), ostream_iterator<char>(os));
     return os;
