@@ -63,6 +63,7 @@ void test_constructors() {
     TEST("339942088881935131302157980349511352979684", 
          B(4324, 5453, 43262, 54626, 999))
     TEST("00000000001024", B(1024))
+    TEST("18446744090889420804", B(4, 4, 1))
     TEST(B(num.begin() + 6, num.end() - 7), B(2978821099, 651407276, 290))
 }
 #undef TEST
@@ -112,9 +113,9 @@ void test_increment_and_decrement() {
 #undef TEST
 
 #define TEST(augend, audend, sum) { \
-        big_uint x { augend }; \
-        digit    y { audend }; \
-        big_uint z { sum }; \
+        big_uint x{ augend }; \
+        digit    y{ audend }; \
+        big_uint z{ sum }; \
         big_uint t; \
         ASSERT((t = x + y) == z && t.satisfies_invariant(), \
                LIT(x, #augend) \
@@ -150,15 +151,17 @@ void test_add_digit() {
     TEST(B(m - 41, 42), 42, B(0, 43));
     TEST(B(m, m), 1, B(0, 0, 1));
     TEST(B(m, m, m), 1, B(0, 0, 0, 1));
+    TEST(B(m, m, m), 0, B(m, m, m));
     TEST(B(m, m, m), 100, B(99, 0, 0, 1));
     TEST(B(m, m, 5), 100, B(99, 0, 6));
+    TEST("3243267419327147878943294639276", 0, "3243267419327147878943294639276");
 }
 #undef TEST
 
 #define TEST(minuend, subtrahend, difference) { \
-        big_uint x { minuend }; \
-        digit    y { subtrahend }; \
-        big_uint z { difference }; \
+        big_uint x{ minuend }; \
+        digit    y{ subtrahend }; \
+        big_uint z{ difference }; \
         big_uint t; \
         ASSERT((t = x - y) == z && t.satisfies_invariant(), \
                LIT(x, #minuend) \
@@ -187,9 +190,9 @@ void test_subtract_digit() {
 #undef TEST
 
 #define TEST(minuend, subtrahend, difference) { \
-        digit    x { minuend }; \
-        big_uint y { subtrahend }; \
-        digit    z { difference }; \
+        digit    x{ minuend }; \
+        big_uint y{ subtrahend }; \
+        digit    z{ difference }; \
         digit    t; \
         ASSERT((t = x - y) == z, \
                LIT(x, #minuend) \
@@ -212,9 +215,14 @@ void test_reverse_subtract_digit() {
 #undef TEST
 
 #define TEST(multiplier, multiplicand, product) { \
-        big_uint x { multiplier }; \
-        digit    y { multiplicand }; \
-        big_uint z { product }; \
+        big_uint x{ multiplier }; \
+        digit    y{ multiplicand }; \
+        big_uint z{ product }; \
+        big_uint t; \
+        ASSERT((t = x * y) == z && t.satisfies_invariant(), \
+               LIT(x, #multiplier) \
+               LIT(y, #multiplicand) \
+               LIT(z, #product)) \
         ASSERT((x *= y) == z && x.satisfies_invariant(), \
                LIT(x, #multiplier) \
                LIT(y, #multiplicand) \
@@ -249,9 +257,9 @@ void test_multiply_digit() {
 
 #define TEST(dividend, divisor, quotient, reminder) { \
         { \
-            big_uint x { dividend }; \
-            digit    y { divisor }; \
-            big_uint z { quotient }; \
+            big_uint x{ dividend }; \
+            digit    y{ divisor }; \
+            big_uint z{ quotient }; \
             big_uint t; \
             ASSERT((t = x / y) == z && t.satisfies_invariant(), \
                    LIT(x, #dividend) \
@@ -263,9 +271,9 @@ void test_multiply_digit() {
                    LIT(z, #quotient)) \
         } \
         { \
-            big_uint x { dividend }; \
-            digit    y { divisor }; \
-            digit    z { reminder }; \
+            big_uint x{ dividend }; \
+            digit    y{ divisor }; \
+            digit    z{ reminder }; \
             ASSERT((x % y) == z, \
                    LIT(x, #dividend) \
                    LIT(y, #divisor) \
@@ -311,10 +319,10 @@ void test_divide_digit() {
 #undef TEST
 
 #define TEST(dividend, divisor, quotient, reminder) { \
-        digit    x { dividend }; \
-        big_uint y { divisor }; \
-        big_uint z { quotient }; \
-        digit    r { reminder }; \
+        digit    x{ dividend }; \
+        big_uint y{ divisor }; \
+        big_uint z{ quotient }; \
+        digit    r{ reminder }; \
         ASSERT(x / y == z, \
                LIT(x, #dividend) \
                LIT(y, #divisor) \
@@ -345,37 +353,54 @@ void test_reverse_divide_digit() {
 #undef TEST
 
 #define TEST(augend, audend, sum) { \
+        big_uint t; \
         { \
-            big_uint x { augend }; \
-            big_uint y { audend }; \
-            big_uint z { sum }; \
+            big_uint x{ augend }; \
+            big_uint y{ audend }; \
+            big_uint z{ sum }; \
+            ASSERT((t = x + y) == z && t.satisfies_invariant(), \
+                   LIT(x, #augend) \
+                   LIT(y, #audend) \
+                   LIT(z, #sum)) \
             ASSERT((x += y) == z && x.satisfies_invariant(), \
                    LIT(x, #augend) \
                    LIT(y, #audend) \
                    LIT(z, #sum)) \
         } \
         { \
-            big_uint x { audend }; \
-            big_uint y { augend }; \
-            big_uint z { sum }; \
+            big_uint x{ audend }; \
+            big_uint y{ augend }; \
+            big_uint z{ sum }; \
+            ASSERT((t = x + y) == z && t.satisfies_invariant(), \
+                   LIT(x, #audend) \
+                   LIT(y, #augend) \
+                   LIT(z, #sum)) \
             ASSERT((x += y) == z && x.satisfies_invariant(), \
                    LIT(x, #audend) \
                    LIT(y, #augend) \
                    LIT(z, #sum)) \
         } \
         { \
-            big_uint x { sum }; \
-            big_uint y { augend }; \
-            big_uint z { audend }; \
+            big_uint x{ sum }; \
+            big_uint y{ augend }; \
+            big_uint z{ audend }; \
+            ASSERT((t = x - y) == z && t.satisfies_invariant(), \
+                   LIT(x, #sum) \
+                   LIT(y, #augend) \
+                   LIT(z, #audend)) \
             ASSERT((x -= y) == z && x.satisfies_invariant(), \
                    LIT(x, #sum) \
                    LIT(y, #augend) \
                    LIT(z, #audend)) \
         } \
         { \
-            big_uint x { sum }; \
-            big_uint y { audend }; \
-            big_uint z { augend }; \
+            big_uint x{ sum }; \
+            big_uint y{ audend }; \
+            big_uint z{ augend }; \
+            ASSERT((t = x - y) == z && t.satisfies_invariant(), \
+                   LIT(x, #sum) \
+                   LIT(y, #audend) \
+                   LIT(z, #augend)) \
             ASSERT((x -= y) == z && x.satisfies_invariant(), \
                    LIT(x, #sum) \
                    LIT(y, #audend) \
@@ -423,19 +448,28 @@ void test_add_and_subtract() {
 #undef TEST
 
 #define TEST(multiplier, multiplicand, product) { \
+        big_uint t; \
         { \
-            big_uint x { multiplier }; \
-            big_uint y { multiplicand }; \
-            big_uint z { product }; \
+            big_uint x{ multiplier }; \
+            big_uint y{ multiplicand }; \
+            big_uint z{ product }; \
+            ASSERT((t = x * y) == z && t.satisfies_invariant(), \
+                   LIT(x, #multiplier) \
+                   LIT(y, #multiplicand) \
+                   LIT(z, #product)) \
             ASSERT((x *= y) == z && x.satisfies_invariant(), \
                    LIT(x, #multiplier) \
                    LIT(y, #multiplicand) \
                    LIT(z, #product)) \
         } \
         { \
-            big_uint x { multiplicand }; \
-            big_uint y { multiplier }; \
-            big_uint z { product }; \
+            big_uint x{ multiplicand }; \
+            big_uint y{ multiplier }; \
+            big_uint z{ product }; \
+            ASSERT((t = x * y) == z && t.satisfies_invariant(), \
+                   LIT(x, #multiplicand) \
+                   LIT(y, #multiplier) \
+                   LIT(z, #product)) \
             ASSERT((x *= y) == z && x.satisfies_invariant(), \
                    LIT(x, #multiplicand) \
                    LIT(y, #multiplier) \
@@ -464,28 +498,38 @@ void test_multiply() {
     TEST(B(8), B(m), B(8 * m, 7))
     TEST(B(m), B(m), B(1, m - 1))
     TEST(B(m), B(m, m), B(1, m, m - 1))
+    TEST(B(0, 1), B(0, 1), B(0, 0, 1))
     TEST(B(m, m), B(m, m), B(1, 0, m - 1, m))
     TEST(B(m, m, m, m, m), B(m, m, m), B(1, 0, 0, m, m, m - 1, m, m))
     TEST(("32153214732946372463729643826473821964783921648"), 
          ("4324324234136748316481"), 
          ("139040925675082734651478887262280244116520657008305538586301011080688"))
+    big_uint x{ 0, 1 };
+    big_uint y{ 0, 0, 1 };
+    big_uint t;
+    ASSERT((t = x * x) == y && t.satisfies_invariant(),
+           LIT(x, "B(m)")
+           LIT(y, "B(1, m - 1)"))
+    ASSERT((x *= x) == y && t.satisfies_invariant(),
+           LIT(x, "B(m)")
+           LIT(y, "B(1, m - 1)"))
 }
 #undef TEST
 
 #define TEST(dividend, divisor, quotient, reminder) { \
         { \
-            big_uint x { dividend }; \
-            big_uint y { divisor }; \
-            big_uint z { quotient }; \
+            big_uint x{ dividend }; \
+            big_uint y{ divisor }; \
+            big_uint z{ quotient }; \
             ASSERT((x /= y) == z && x.satisfies_invariant(), \
                    LIT(x, #dividend) \
                    LIT(y, #divisor) \
                    LIT(z, #quotient)) \
         } \
         { \
-            big_uint x { dividend }; \
-            big_uint y { divisor }; \
-            big_uint z { reminder }; \
+            big_uint x{ dividend }; \
+            big_uint y{ divisor }; \
+            big_uint z{ reminder }; \
             ASSERT((x %= y) == z && x.satisfies_invariant(), \
                    LIT(x, #dividend) \
                    LIT(y, #divisor) \
@@ -736,8 +780,8 @@ void test_divide() {
 #undef TEST
 
 #define TEST(left, right) { \
-        big_uint x { left }; \
-        big_uint y { right }; \
+        big_uint x{ left }; \
+        big_uint y{ right }; \
         ASSERT(x < y, \
                LIT(x, #left) \
                LIT(y, #right)) \
@@ -761,7 +805,7 @@ void test_divide() {
         ASSERT(y == y, \
                LIT(y, #right)) \
     }
-void test_compares() {
+void test_comparisons() {
     TEST(B(0), B(1))
     TEST(B(0), B(2))
     TEST(B(0), B(m))
@@ -859,6 +903,233 @@ void test_compares() {
 }
 #undef TEST
 
+#define TEST_R(left, right) { \
+        big_uint x{ left }; \
+        digit    y{ right }; \
+        ASSERT(x < y, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(x <= y, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(y > x, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(y >= x, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(x != y, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(y != x, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(x == x, \
+               LIT(x, #left)) \
+        ASSERT(y == y, \
+               LIT(y, #right)) \
+    }
+#define TEST_L(left, right) { \
+        digit    x{ left }; \
+        big_uint y{ right }; \
+        ASSERT(x < y, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(x <= y, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(y > x, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(y >= x, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(x != y, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(y != x, \
+               LIT(x, #left) \
+               LIT(y, #right)) \
+        ASSERT(x == x, \
+               LIT(x, #left)) \
+        ASSERT(y == y, \
+               LIT(y, #right)) \
+    }
+void test_comparisons_digit() {
+    TEST_R(B(0), 1)
+    TEST_R(B(0), 2)
+    TEST_R(B(0), 42)
+    TEST_R(B(0), m)
+    TEST_R(B(1), 2)
+    TEST_R(B(1), 42)
+    TEST_R(B(1), m)
+    TEST_R(B(2), 42)
+    TEST_R(B(2), m)
+    TEST_R(B(42), m)
+    TEST_L(0, B(1))
+    TEST_L(0, B(2))
+    TEST_L(0, B(42))
+    TEST_L(0, B(m))
+    TEST_L(0, B(0, 1))
+    TEST_L(0, B(1, 1))
+    TEST_L(0, B(2, 1))
+    TEST_L(0, B(42, 1))
+    TEST_L(0, B(m, 1))
+    TEST_L(0, B(0, 2))
+    TEST_L(0, B(1, 2))
+    TEST_L(0, B(42, 2))
+    TEST_L(0, B(m, 2))
+    TEST_L(0, B(0, 42))
+    TEST_L(0, B(1, 42))
+    TEST_L(0, B(42, 42))
+    TEST_L(0, B(m, 42))
+    TEST_L(0, B(0, m))
+    TEST_L(0, B(1, m))
+    TEST_L(0, B(42, m))
+    TEST_L(0, B(m, m))
+    TEST_L(1, B(2))
+    TEST_L(1, B(42))
+    TEST_L(1, B(m))
+    TEST_L(1, B(0, 1))
+    TEST_L(1, B(1, 1))
+    TEST_L(1, B(2, 1))
+    TEST_L(1, B(42, 1))
+    TEST_L(1, B(m, 1))
+    TEST_L(1, B(0, 2))
+    TEST_L(1, B(1, 2))
+    TEST_L(1, B(42, 2))
+    TEST_L(1, B(m, 2))
+    TEST_L(1, B(0, 42))
+    TEST_L(1, B(1, 42))
+    TEST_L(1, B(42, 42))
+    TEST_L(1, B(m, 42))
+    TEST_L(1, B(0, m))
+    TEST_L(1, B(1, m))
+    TEST_L(1, B(42, m))
+    TEST_L(1, B(m, m))
+    TEST_L(2, B(42))
+    TEST_L(2, B(m))
+    TEST_L(2, B(0, 1))
+    TEST_L(2, B(1, 1))
+    TEST_L(2, B(2, 1))
+    TEST_L(2, B(42, 1))
+    TEST_L(2, B(m, 1))
+    TEST_L(2, B(0, 2))
+    TEST_L(2, B(1, 2))
+    TEST_L(2, B(42, 2))
+    TEST_L(2, B(m, 2))
+    TEST_L(2, B(0, 42))
+    TEST_L(2, B(1, 42))
+    TEST_L(2, B(42, 42))
+    TEST_L(2, B(m, 42))
+    TEST_L(2, B(0, m))
+    TEST_L(2, B(1, m))
+    TEST_L(2, B(42, m))
+    TEST_L(2, B(m, m))
+    TEST_L(42, B(m))
+    TEST_L(42, B(0, 1))
+    TEST_L(42, B(1, 1))
+    TEST_L(42, B(2, 1))
+    TEST_L(42, B(42, 1))
+    TEST_L(42, B(m, 1))
+    TEST_L(42, B(0, 2))
+    TEST_L(42, B(1, 2))
+    TEST_L(42, B(42, 2))
+    TEST_L(42, B(m, 2))
+    TEST_L(42, B(0, 42))
+    TEST_L(42, B(1, 42))
+    TEST_L(42, B(42, 42))
+    TEST_L(42, B(m, 42))
+    TEST_L(42, B(0, m))
+    TEST_L(42, B(1, m))
+    TEST_L(42, B(42, m))
+    TEST_L(42, B(m, m))
+    TEST_L(m, B(0, 1))
+    TEST_L(m, B(1, 1))
+    TEST_L(m, B(2, 1))
+    TEST_L(m, B(42, 1))
+    TEST_L(m, B(m, 1))
+    TEST_L(m, B(0, 2))
+    TEST_L(m, B(1, 2))
+    TEST_L(m, B(42, 2))
+    TEST_L(m, B(m, 2))
+    TEST_L(m, B(0, 42))
+    TEST_L(m, B(1, 42))
+    TEST_L(m, B(42, 42))
+    TEST_L(m, B(m, 42))
+    TEST_L(m, B(0, m))
+    TEST_L(m, B(1, m))
+    TEST_L(m, B(42, m))
+    TEST_L(m, B(m, m))
+}
+#undef TEST_R
+#undef TEST_L
+
+#define TEST(base, exponent, power) { \
+        big_uint x{ base }; \
+        big_uint y{ power }; \
+        big_uint t; \
+        ASSERT((t = x.pow(exponent)) == y && t.satisfies_invariant(), \
+               LIT(x, #base) \
+               LIT(y, #power)) \
+    }
+void test_pow() {
+    TEST(B(0), 0, B(1))
+    TEST(B(1), 0, B(1))
+    TEST(B(2), 0, B(1))
+    TEST(B(42), 0, B(1))
+    TEST(B(m), 0, B(1))
+    TEST(B(0, 1), 0, B(1))
+    TEST(B(1, 1), 0, B(1))
+    TEST(B(2, 1), 0, B(1))
+    TEST(B(42, 1), 0, B(1))
+    TEST(B(m, 1), 0, B(1))
+    TEST(B(0, m), 0, B(1))
+    TEST(B(1, m), 0, B(1))
+    TEST(B(2, m), 0, B(1))
+    TEST(B(42, m), 0, B(1))
+    TEST(B(m, m), 0, B(1))
+    TEST(B(432, 432, 32, 42, 3214, 32), 0, B(1))
+    TEST(B(0), 1, B(0))
+    TEST(B(1), 1, B(1))
+    TEST(B(2), 1, B(2))
+    TEST(B(42), 1, B(42))
+    TEST(B(m), 1, B(m))
+    TEST(B(0, 1), 1, B(0, 1))
+    TEST(B(1, 1), 1, B(1, 1))
+    TEST(B(2, 1), 1, B(2, 1))
+    TEST(B(42, 1), 1, B(42, 1))
+    TEST(B(m, 1), 1, B(m, 1))
+    TEST(B(0, m), 1, B(0, m))
+    TEST(B(1, m), 1, B(1, m))
+    TEST(B(2, m), 1, B(2, m))
+    TEST(B(42, m), 1, B(42, m))
+    TEST(B(m, m), 1, B(m, m))
+    TEST(B(432, 432, 32, 42, 3214, 32), 1, B(432, 432, 32, 42, 3214, 32))
+    TEST(B(0), 2, B(0))
+    TEST(B(1), 2, B(1))
+    TEST(B(2), 2, B(4))
+    TEST(B(42), 2, B(1764))
+    TEST(B(m), 2, B(1, m - 1))
+    TEST(B(0, 1), 2, "18446744073709551616")
+    TEST(B(1, 1), 2, "18446744082299486209")
+    TEST(B(2, 1), 2, "18446744090889420804")
+    TEST(B(42, 1), 2, "18446744434486806244")
+    TEST(B(m, 1), 2, "73786976277658337281")
+    TEST(B(0, m), 2, "340282366762482138453292676318389862400")
+    TEST(B(1, m), 2, "340282366762482138490186164457219031041")
+    TEST(B(2, m), 2, "340282366762482138527079652596048199684")
+    TEST(B(42, m), 2, "340282366762482140002819178149214947044")
+    TEST(B(m, m), 2, "340282366920938463426481119284349108225")
+    TEST("3143271849327891473289789789374282", 2, 
+         "9880157918777182876145376146391788801255400268620362724753083015524")
+    TEST("4738291477084372891789473829478932", 2, 
+         "22451406121810408237118933033938067953672353960296953800970631860624")
+    TEST("7832748932748732984789328978978924", 2, 
+         "61351955843476415598484178692699172363218502316314342645877636197776")
+}
+#undef TEST
+
 int main() {
     test_constructors();
     test_increment_and_decrement();
@@ -871,6 +1142,8 @@ int main() {
     test_add_and_subtract();
     test_multiply();
     test_divide();
-    test_compares();
+    test_comparisons();
+    test_comparisons_digit();
+    test_pow();
     cout << "OK!" << endl;
 }

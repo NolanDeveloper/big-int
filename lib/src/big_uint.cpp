@@ -196,6 +196,7 @@ digit operator%(digit lhs, const big_uint & rhs) {
 }
 
 big_uint & big_uint::operator+=(digit d) {
+    if (d == 0) return *this;
     if (*this == 0u) {
         _digits[0] = d;
         return *this;
@@ -309,7 +310,7 @@ big_uint big_uint::div(const big_uint & num, digit denom) {
     return div(num, denom, rem);
 }
 
-big_uint big_uint::operator+(const big_uint & x) {
+big_uint big_uint::operator+(const big_uint & x) const {
     deque<digit> res;
     auto prev  = _digits.begin();
     auto it    = prev + 1;
@@ -319,37 +320,41 @@ big_uint big_uint::operator+(const big_uint & x) {
     auto _end  = x._digits.end();
     long_digit t = static_cast<long_digit>(*prev) + *_prev;
     res.push_back(t);
+    t >>= 8 * sizeof(digit);
     while (it != end && _it != _end) {
-        t = static_cast<long_digit>(*it) + *_it + (t >> 8 * sizeof(digit));
+        t += static_cast<long_digit>(*it) + *_it;
         res.push_back(t);
+        t >>= 8 * sizeof(digit);
         prev  = it;
         _prev = _it;
         ++it; 
         ++_it;
     }
     if (_it == _end) { 
-        if (t >> 8 * sizeof(digit)) {
-            if (it == end) {
+        if (it == end) {
+            if (t) 
                 res.push_back(1);
-            } else {
+        } else {
+            res.push_back(*it + t);
+            prev = it;
+            ++it;
+            while (it != end && res.back() < *prev) {
                 res.push_back(*it + 1);
-                prev = it; 
+                prev = it;
                 ++it;
-                while (it != end && *prev == 0) {
-                    res.push_back(*it + 1);
-                    prev = it; 
-                    ++it;
-                }
-                if (it == end && *prev == 0) 
-                    res.push_back(1);
             }
+            if (it == end) {
+                if (res.back() < *prev)
+                    res.push_back(1);
+            } else 
+                copy(it, end, back_inserter(res));
         }
     } else { // if (it == end)
-        res.push_back(*_it + (t >> 8 * sizeof(digit)));
+        res.push_back(*_it + t);
         _prev = _it; 
         ++_it;
         while (_it != _end) {
-            res.push_back(*_it + (_digits.back() < *_prev));
+            res.push_back(*_it + (res.back() < *_prev));
             _prev = _it;
             ++_it;
         }
@@ -359,11 +364,11 @@ big_uint big_uint::operator+(const big_uint & x) {
     return { res };
 }
 
-big_uint big_uint::operator-(const big_uint & x) {
+big_uint big_uint::operator-(const big_uint & x) const {
     if (*this < x)
         throw logic_error("Minuend must be greater than subtrahend.");
     deque<digit> res;
-    size_t msd = 0; // position of last non zero digit + 1 
+    size_t msd = 1; // position of last non zero digit + 1 
     auto prev  = _digits.begin();
     auto it    = prev + 1;
     auto end   = _digits.end();
@@ -382,45 +387,35 @@ big_uint big_uint::operator-(const big_uint & x) {
         _prev = _it;
         ++_it;
     }
-    if (carry) {
+    while (carry) {
+        carry = *it == 0;
         res.push_back(*it - 1);
         if (res.back()) 
             msd = res.size();
-        prev = it;
         ++it;
     }
-    while (*prev == 0) {
-        res.push_back(*it - 1);
-        if (res.back()) 
-            msd = res.size();
-        prev = it;
-        ++it;
-    }
-    if (it != end) 
+    if (it != end) {
+        copy(it, end, back_inserter(res));
         return { res };
+    }
     res.erase(res.begin() + msd, res.end());
     return { res };
 }
 
-big_uint big_uint::operator*(const big_uint & x) {
+big_uint big_uint::operator*(const big_uint & x) const {
     if (*this == 1u) return x;
+    if (*this == 0u || x == 0u) return { 0u };
     big_uint res;
-    big_uint t;
-    size_t s = 0;
-    for (digit d : x._digits) {
-        t = *this;
-        t *= d;
-        res.add_with_shift(t, s);
-        ++s;
-    }
+    for (size_t s = 0; s < x._digits.size(); ++s)
+        res.add_with_shift(*this * x._digits[s], s);
     return res;
 }
 
-big_uint big_uint::operator/(const big_uint & x) {
+big_uint big_uint::operator/(const big_uint & x) const {
     return div(*this, x);
 }
 
-big_uint big_uint::operator%(const big_uint & x) {
+big_uint big_uint::operator%(const big_uint & x) const {
     big_uint rem;
     div(*this, x, rem);
     return rem;
@@ -506,8 +501,7 @@ big_uint & big_uint::operator-=(const big_uint & x) {
 }
 
 void big_uint::add_with_shift(const big_uint & x, size_t s) {
-    if (x == 0u) return;
-    if (_digits.size() < s) _digits.resize(s);
+    if (_digits.size() <= s) _digits.resize(s + 1);
     auto prev  = _digits.begin() + s;
     auto it    = prev + 1;
     auto end   = _digits.end();
@@ -548,18 +542,7 @@ void big_uint::add_with_shift(const big_uint & x, size_t s) {
 }
 
 big_uint & big_uint::operator*=(const big_uint & x) {
-    if (*this == 1u) 
-        return *this = x;
-    big_uint res;
-    big_uint t;
-    size_t s = 0;
-    for (digit d : x._digits) {
-        t = *this;
-        t *= d;
-        res.add_with_shift(t, s);
-        ++s;
-    }
-    return *this = res;
+    return *this = *this * x;
 }
 
 big_uint & big_uint::operator/=(const big_uint & x) {
@@ -768,6 +751,24 @@ bool operator!=(const big_uint & lhs, digit rhs) {
     return !(lhs == rhs);
 }
 
+big_uint big_uint::pow(digit e) const {
+    if (e == 0)
+        return { 1 };
+    if (*this == 0u) 
+        return { 0 };
+    big_uint x{ *this };
+    big_uint y{ 1 };
+    while (e > 1) {
+        if (e & 1) {
+            y *= x;
+            x *= x;
+        } else
+            x *= x;
+        e >>= 1;
+    }
+    return x * y;
+}
+
 bool big_uint::satisfies_invariant() const {
     return _digits.size() == 1 ||
         (_digits.size() > 1 && _digits.back() != 0);
@@ -779,7 +780,7 @@ std::ostream & operator<<(std::ostream & os, big_uint x) {
     vector<char> result;
     digit rem;
     while (x != 0u) {
-        x /= big_uint::div(x, 10, rem);
+        x = big_uint::div(x, 10, rem);
         result.push_back('0' + rem);
     }
     copy(result.rbegin(), result.rend(), ostream_iterator<char>(os));

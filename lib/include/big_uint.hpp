@@ -34,7 +34,7 @@ public:
     big_uint(std::string::const_iterator begin, std::string::const_iterator end);
     big_uint(const big_uint &) = default;
     big_uint(big_uint &&) = default;
-    big_uint & operator=(const big_uint &) = default;
+    big_uint & operator=(const big_uint & x) = default;
     big_uint & operator=(big_uint &&) = default;
 
     const std::deque<digit> digits() const;
@@ -65,11 +65,11 @@ public:
     static big_uint div(const big_uint & num, digit denom, digit & rem);
     static big_uint div(const big_uint & num, digit denom);
 
-    big_uint operator+(const big_uint & x);
-    big_uint operator-(const big_uint & x);
-    big_uint operator*(const big_uint & x);
-    big_uint operator/(const big_uint & x);
-    big_uint operator%(const big_uint & x);
+    big_uint operator+(const big_uint & x) const;
+    big_uint operator-(const big_uint & x) const;
+    big_uint operator*(const big_uint & x) const;
+    big_uint operator/(const big_uint & x) const;
+    big_uint operator%(const big_uint & x) const;
 
     big_uint & operator+=(const big_uint & x);
     big_uint & operator-=(const big_uint & x);
@@ -113,7 +113,7 @@ public:
     friend bool operator==(const big_uint & lhs, digit rhs);
     friend bool operator!=(const big_uint & lhs, digit rhs);
 
-    //big_uint pow(long e) const;
+    big_uint pow(digit e) const;
     //big_uint pow_mod(long e, big_uint mod) const;
 
     bool satisfies_invariant() const;
