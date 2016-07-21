@@ -62,8 +62,8 @@ public:
     big_uint & operator/=(digit d);
     big_uint & operator%=(digit d);
 
-    static big_uint div(const big_uint & num, digit denom, digit & rem);
-    static big_uint div(const big_uint & num, digit denom);
+    static big_uint div(const big_uint & dividend, digit divisor, digit & reminder);
+    static big_uint div(const big_uint & dividend, digit divisor);
 
     big_uint operator+(const big_uint & x) const;
     big_uint operator-(const big_uint & x) const;
@@ -77,8 +77,9 @@ public:
     big_uint & operator/=(const big_uint & x);
     big_uint & operator%=(const big_uint & x);
 
-    static big_uint div(const big_uint & num, const big_uint & denom, big_uint & rem);
-    static big_uint div(const big_uint & num, const big_uint & denom);
+    static big_uint div(const big_uint & dividend, const big_uint & divisor, 
+                        big_uint & reminder);
+    static big_uint div(const big_uint & dividend, const big_uint & divisor);
 
     bool operator==(const big_uint & rhs) const;
     bool operator!=(const big_uint & rhs) const;

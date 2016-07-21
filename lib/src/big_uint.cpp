@@ -277,37 +277,37 @@ big_uint & big_uint::operator%=(digit d) {
     return *this;
 }
 
-big_uint big_uint::div(const big_uint & num, digit denom, digit & rem) {
-    if (denom == 0) throw logic_error("Division by zero.");
-    if (num < denom) {
-        rem = num._digits[0];
+big_uint big_uint::div(const big_uint & dividend, digit divisor, digit & reminder) {
+    if (divisor == 0) throw logic_error("Division by zero.");
+    if (dividend < divisor) {
+        reminder = dividend._digits[0];
         return { 0u };
     }
-    auto it  = num._digits.rbegin();
-    auto end = num._digits.rend();
+    auto it  = dividend._digits.rbegin();
+    auto end = dividend._digits.rend();
     deque<digit> quot;
     long_digit x = *it;
     ++it;
-    if (x < denom) {
+    if (x < divisor) {
         x <<= sizeof(digit) * 8;
         x |= *it;
         ++it;
     }
     while (true) {
-        quot.push_front(x / denom);
-        x = x % denom;
+        quot.push_front(x / divisor);
+        x = x % divisor;
         if (it == end) break;
         x <<= sizeof(digit) * 8;
         x |= *it;
         ++it;
     }
-    rem = x;
+    reminder = x;
     return { quot };
 }
 
-big_uint big_uint::div(const big_uint & num, digit denom) {
-    digit rem;
-    return div(num, denom, rem);
+big_uint big_uint::div(const big_uint & dividend, digit divisor) {
+    digit reminder;
+    return div(dividend, divisor, reminder);
 }
 
 big_uint big_uint::operator+(const big_uint & x) const {
