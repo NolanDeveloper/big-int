@@ -362,6 +362,10 @@ bool big_int::satisfies_invariant() const {
         (_modulus != 0u || _sign == sign_t::PLUS);
 }
 
+big_int big_int::pow(digit e) const {
+    return { (0 == e % 2) ? sign_t::PLUS : _sign, _modulus.pow(e) };
+}
+
 ostream & operator<<(ostream & os, const big_int & x) {
     if (x._sign == big_int::sign_t::MINUS) 
         os << '-';

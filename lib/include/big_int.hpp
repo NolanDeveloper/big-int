@@ -92,7 +92,7 @@ public:
 
     bool satisfies_invariant() const;
 
-    // big_int pow(long e) const;
+    big_int pow(digit e) const;
 
     friend std::ostream & operator<<(std::ostream & os, const big_int & x);
     friend std::istream & operator>>(std::istream & os, big_int & x);
