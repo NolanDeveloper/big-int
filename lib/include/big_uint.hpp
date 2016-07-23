@@ -3,15 +3,25 @@
 #include <iostream>
 #include <initializer_list>
 #include <string>
+#include <type_traits>
 #include <deque>
 
 namespace big {
 
-using digit = unsigned int;
+using digit      = unsigned int;
 using long_digit = unsigned long;
+using sdigit     = int;
 
 static_assert(sizeof(long_digit) == 2 * sizeof(digit), 
               "long_digit must be twice as long as digit");
+static_assert(std::is_unsigned<digit>::value,
+              "digit must be unsigned");
+static_assert(std::is_unsigned<long_digit>::value,
+              "long_digit must be unsigned");
+static_assert(sizeof(sdigit) == sizeof(digit), 
+              "sdigit must be as long as digit");
+static_assert(std::is_signed<sdigit>::value,
+              "sdigit must be signed");
 
 /*
  * The class contains positive integer value of arbitrary length. The value is
@@ -31,7 +41,6 @@ public:
     explicit big_uint(digit d);
     big_uint(std::initializer_list<digit> digits);
     big_uint(const std::string & num);
-    big_uint(std::string::const_iterator begin, std::string::const_iterator end);
     big_uint(const big_uint &) = default;
     big_uint(big_uint &&) = default;
     big_uint & operator=(const big_uint & x) = default;
@@ -48,13 +57,13 @@ public:
     friend big_uint operator-(const big_uint & lhs, digit rhs);
     friend big_uint operator*(const big_uint & lhs, digit rhs);
     friend big_uint operator/(const big_uint & lhs, digit rhs);
-    friend digit operator%(const big_uint & lhs, digit rhs);
+    friend big_uint operator%(const big_uint & lhs, digit rhs);
 
     friend big_uint operator+(digit lhs, const big_uint & rhs);
-    friend digit operator-(digit lhs, const big_uint & rhs);
+    friend big_uint operator-(digit lhs, const big_uint & rhs);
     friend big_uint operator*(digit lhs, const big_uint & rhs);
-    friend digit operator/(digit lhs, const big_uint & rhs);
-    friend digit operator%(digit lhs, const big_uint & rhs);
+    friend big_uint operator/(digit lhs, const big_uint & rhs);
+    friend big_uint operator%(digit lhs, const big_uint & rhs);
 
     big_uint & operator+=(digit d);
     big_uint & operator-=(digit d);
@@ -120,6 +129,7 @@ public:
     bool satisfies_invariant() const;
 
     friend std::ostream & operator<<(std::ostream & os, big_uint x);
+    friend std::istream & operator>>(std::istream & is, big_uint & x);
 };
 
 }

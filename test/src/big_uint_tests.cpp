@@ -21,14 +21,6 @@ using namespace std;
         exit(0); \
     }
 
-#define ASSERT_THROWS(expr, msg) \
-    try { \
-        expr; \
-        PRINT_FILE_AND_LINE \
-        cerr << "Expression didn't throw exception: [" << #expr << "]\n"; \
-        cerr << msg << '\n'; \
-    } catch (...) { }
-
 #define B(...) __VA_ARGS__
 
 #define LIT(x, val) "\t" #x " is " val "\n"
@@ -64,7 +56,6 @@ void test_constructors() {
          B(4324, 5453, 43262, 54626, 999))
     TEST("00000000001024", B(1024))
     TEST("18446744090889420804", B(4, 4, 1))
-    TEST(B(num.begin() + 6, num.end() - 7), B(2978821099, 651407276, 290))
 }
 #undef TEST
 
@@ -193,24 +184,24 @@ void test_subtract_digit() {
         digit    x{ minuend }; \
         big_uint y{ subtrahend }; \
         digit    z{ difference }; \
-        digit    t; \
-        ASSERT((t = x - y) == z, \
+        big_uint t; \
+        ASSERT((t = x - y) == z && t.satisfies_invariant(), \
                LIT(x, #minuend) \
                LIT(y, #subtrahend) \
                LIT(z, #difference)) \
     }
 void test_reverse_subtract_digit() {
-    TEST(0, B(0), 0)
-    TEST(1, B(0), 1)
-    TEST(42, B(0), 42)
-    TEST(m, B(0), m)
-    TEST(1, B(1), 0)
-    TEST(42, B(1), 41)
-    TEST(m, B(1), m - 1)
-    TEST(2, B(2), 0)
-    TEST(42, B(2), 40)
-    TEST(m, B(2), m - 2)
-    TEST(m, B(m), 0)
+    TEST(0, B(0), B(0))
+    TEST(1, B(0), B(1))
+    TEST(42, B(0), B(42))
+    TEST(m, B(0), B(m))
+    TEST(1, B(1), B(0))
+    TEST(42, B(1), B(41))
+    TEST(m, B(1), B(m - 1))
+    TEST(2, B(2), B(0))
+    TEST(42, B(2), B(40))
+    TEST(m, B(2), B(m - 2))
+    TEST(m, B(m), B(0))
 }
 #undef TEST
 

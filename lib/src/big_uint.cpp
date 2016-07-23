@@ -11,8 +11,7 @@ namespace big {
 using namespace std;
 
 big_uint::big_uint(deque<digit> digits) : _digits(digits) { 
-    if (!satisfies_invariant())
-        throw logic_error("Digits violate invariant");
+    assert(satisfies_invariant());
 }
 
 big_uint::big_uint() : _digits(1, 0) { }
@@ -20,28 +19,12 @@ big_uint::big_uint() : _digits(1, 0) { }
 big_uint::big_uint(digit d) : _digits(1, d) { }
 
 big_uint::big_uint(initializer_list<digit> digits) : _digits(digits) {
-    if (!satisfies_invariant())
-        throw logic_error("Digits violate invariant");
+    assert(satisfies_invariant());
 }
 
-big_uint::big_uint(const std::string & num) : big_uint(num.cbegin(), num.cend()) { }
-
-big_uint::big_uint(string::const_iterator begin, string::const_iterator end)
-        : _digits(1, 0) {
-    if (begin == end) throw logic_error("Empty input");
-    auto it = begin;
-    while (it != end) {
-        if (!isdigit(*it)) {
-            ostringstream oss;
-            oss << "Input is not unsigned integer: \"";
-            copy(begin, end, ostream_iterator<char>(oss));
-            oss << '\"';
-            throw logic_error(oss.str().c_str());
-        }
-        *this *= 10;
-        *this += *it - '0';
-        ++it;
-    }
+big_uint::big_uint(const std::string & num) {
+    istringstream iss(num);
+    iss >> *this;
 }
 
 const std::deque<digit> big_uint::digits() const {
@@ -57,8 +40,7 @@ big_uint & big_uint::operator++() {
 }
 
 big_uint & big_uint::operator--() {
-    if (_digits.size() == 1 && _digits[0] == 0)
-        throw logic_error("Attempt to decrement zero.");
+    assert(_digits.size() > 1 || _digits[0] != 0);
     if (*this == 1u) {
         _digits[0] = 0;
         return *this;
@@ -112,8 +94,7 @@ big_uint operator+(const big_uint & lhs, digit rhs) {
 }
 
 big_uint operator-(const big_uint & lhs, digit rhs) {
-    if (lhs < rhs)
-        throw logic_error("Minuend must be greater than subtrahend.");
+    assert(lhs >= rhs);
     deque<digit> res;
     auto prev = lhs._digits.begin();
     auto it   = prev + 1;
@@ -154,45 +135,40 @@ big_uint operator*(const big_uint & lhs, digit rhs) {
 }
 
 big_uint operator/(const big_uint & lhs, digit rhs) {
-    if (rhs == 0) 
-        throw logic_error("Division by zero.");
+    assert(rhs != 0);
     return big_uint::div(lhs, rhs);
 }
 
-digit operator%(const big_uint & lhs, digit rhs) {
-    if (rhs == 0) 
-        throw logic_error("Division by zero.");
+big_uint operator%(const big_uint & lhs, digit rhs) {
+    assert(rhs != 0);
     digit rem;
     big_uint::div(lhs, rhs, rem);
-    return rem;
+    return { rem };
 }
 
 big_uint operator+(digit lhs, const big_uint & rhs) {
     return rhs + lhs;
 }
 
-digit operator-(digit lhs, const big_uint & rhs) {
-    if (lhs < rhs)
-        throw logic_error("Minuend must be greater than subtrahend");
-    return lhs - rhs._digits[0];
+big_uint operator-(digit lhs, const big_uint & rhs) {
+    assert(lhs >= rhs);
+    return { lhs - rhs._digits[0] };
 }
 
 big_uint operator*(digit lhs, const big_uint & rhs) {
     return rhs * lhs;
 }
 
-digit operator/(digit lhs, const big_uint & rhs) {
-    if (rhs == 0u) 
-        throw logic_error("Division by zero.");
-    if (rhs > lhs) return 0;
-    return lhs / rhs._digits[0];
+big_uint operator/(digit lhs, const big_uint & rhs) {
+    assert(rhs != 0u);
+    if (rhs > lhs) return { 0u };
+    return { lhs / rhs._digits[0] };
 }
 
-digit operator%(digit lhs, const big_uint & rhs) {
-    if (rhs == 0u) 
-        throw logic_error("Division by zero.");
-    if (rhs > lhs) return lhs;
-    return lhs % rhs._digits[0];
+big_uint operator%(digit lhs, const big_uint & rhs) {
+    assert(rhs != 0u);
+    if (rhs > lhs) return { lhs };
+    return { lhs % rhs._digits[0] };
 }
 
 big_uint & big_uint::operator+=(digit d) {
@@ -225,8 +201,7 @@ big_uint & big_uint::operator+=(digit d) {
 }
 
 big_uint & big_uint::operator-=(digit d) {
-    if (*this < d)
-        throw logic_error("Minuend must be greater than subtrahend.");
+    assert(*this >= d);
     auto prev = _digits.begin();
     auto it   = prev + 1;
     auto end  = _digits.end();
@@ -264,12 +239,12 @@ big_uint & big_uint::operator*=(digit d) {
 }
 
 big_uint & big_uint::operator/=(digit d) {
-    if (d == 0) throw logic_error("Division by zero.");
+    assert(d != 0);
     return *this = div(*this, d);
 }
 
 big_uint & big_uint::operator%=(digit d) {
-    if (d == 0) throw logic_error("Division by zero.");
+    assert(d != 0);
     digit rem;
     div(*this, d, rem); 
     _digits.clear();
@@ -278,7 +253,7 @@ big_uint & big_uint::operator%=(digit d) {
 }
 
 big_uint big_uint::div(const big_uint & dividend, digit divisor, digit & reminder) {
-    if (divisor == 0) throw logic_error("Division by zero.");
+    assert(divisor != 0);
     if (dividend < divisor) {
         reminder = dividend._digits[0];
         return { 0u };
@@ -365,8 +340,7 @@ big_uint big_uint::operator+(const big_uint & x) const {
 }
 
 big_uint big_uint::operator-(const big_uint & x) const {
-    if (*this < x)
-        throw logic_error("Minuend must be greater than subtrahend.");
+    assert(*this >= x);
     deque<digit> res;
     size_t msd = 1; // position of last non zero digit + 1 
     auto prev  = _digits.begin();
@@ -422,49 +396,12 @@ big_uint big_uint::operator%(const big_uint & x) const {
 }
 
 big_uint & big_uint::operator+=(const big_uint & x) {
-    auto prev  = _digits.begin();
-    auto it    = prev + 1;
-    auto end   = _digits.end();
-    auto _prev = x._digits.begin();
-    auto _it   = _prev + 1;
-    auto _end  = x._digits.end();
-    long_digit t = static_cast<long_digit>(*prev) + *_prev;
-    *prev = t;
-    while (it != end && _it != _end) {
-        t = static_cast<long_digit>(*it) + *_it + (t >> 8 * sizeof(digit));
-        *it   = t;
-        prev  = it;
-        _prev = _it;
-        ++it; ++_it;
-    }
-    if (_it == _end) { 
-        if (t >> 8 * sizeof(digit)) {
-            if (it == end) {
-                _digits.push_back(1);
-            } else {
-                ++*it; prev = it; ++it;
-                while (it != end && *prev == 0) {
-                    ++*it; prev = it; ++it;
-                }
-                if (it == end && *prev == 0) _digits.push_back(1);
-            }
-        }
-    } else { // if (it == end)
-        _digits.push_back(*_it + (t >> 8 * sizeof(digit)));
-        _prev = _it; ++_it;
-        while (_it != _end) {
-            _digits.push_back(*_it + (_digits.back() < *_prev));
-            _prev = _it;
-            ++_it;
-        }
-        if (_digits.back() < *_prev) _digits.push_back(1);
-    }
+    add_with_shift(x, 0);
     return *this;
 }
 
 big_uint & big_uint::operator-=(const big_uint & x) { 
-    if (*this < x)
-        throw logic_error("Minuend must be greater than subtrahend.");
+    assert(*this >= x);
     auto prev  = _digits.begin();
     auto it    = prev + 1;
     auto end   = _digits.end();
@@ -557,7 +494,7 @@ big_uint & big_uint::operator%=(const big_uint & x) {
 
 big_uint big_uint::div(const big_uint & dividend, const big_uint & divisor, 
                        big_uint & reminder) {
-    if (divisor == 0u) throw logic_error("Division by zero.");
+    assert(divisor != 0u);
     if (dividend < divisor) {
         reminder = dividend;
         return { };
@@ -774,7 +711,7 @@ bool big_uint::satisfies_invariant() const {
         (_digits.size() > 1 && _digits.back() != 0);
 }
 
-std::ostream & operator<<(std::ostream & os, big_uint x) {
+ostream & operator<<(ostream & os, big_uint x) {
     if (x == 0u)
         return os << '0';
     vector<char> result;
@@ -785,6 +722,15 @@ std::ostream & operator<<(std::ostream & os, big_uint x) {
     }
     copy(result.rbegin(), result.rend(), ostream_iterator<char>(os));
     return os;
+}
+
+istream & operator>>(istream & is, big_uint & x) {
+    x = { 0u };
+    for (istreambuf_iterator<char> it{ is }, end; it != end && isdigit(*it); ++it) {
+        x *= 10;
+        x += *it - '0';
+    }
+    return is;
 }
 
 }
