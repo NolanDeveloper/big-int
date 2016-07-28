@@ -1,4 +1,5 @@
 #include "big_uint.hpp"
+#include "assert.hpp"
 
 #include <tuple>
 #include <utility>
@@ -9,21 +10,6 @@
 
 using namespace big;
 using namespace std;
-
-#define PRINT_FILE_AND_LINE \
-    cerr << __FILE__ << ':' << __LINE__ << '\n';
-
-#define ASSERT(cond, msg) \
-    if (!(cond)) { \
-        PRINT_FILE_AND_LINE \
-        cerr << "Assertion failed: [" << #cond << "]\n"; \
-        cerr << msg << '\n'; \
-        exit(0); \
-    }
-
-#define B(...) __VA_ARGS__
-
-#define LIT(x, val) "\t" #x " is " val "\n"
 
 static const digit      m  = numeric_limits<digit>::max();
 static const long_digit mm = numeric_limits<long_digit>::max();
@@ -1163,6 +1149,7 @@ void test_pow() {
 #undef TEST
 
 int main() {
+    cout << "big_uint_tests.cpp\n";
     test_constructors();
     test_increment_and_decrement();
     test_add_digit();

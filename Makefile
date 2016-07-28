@@ -2,7 +2,7 @@ SOURCES := $(wildcard lib/src/*.cpp)
 
 CXX := clang++
 CXX_FLAGS := -std=c++14 -g
-INC := -I./lib/include
+INC := -I./lib/include -I./test/include
 
 .PHONY: all
 all: build_dir build/libbig_int.a

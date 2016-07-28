@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <deque>
 #include <string>
 
 #include "big_uint.hpp"
@@ -20,6 +19,8 @@ private:
 
     big_int(sign_t s, const big_uint & m);
     big_int(sign_t s, big_uint && m);
+
+    big_int & fix_zero();
 
 public:
     big_int() = default;

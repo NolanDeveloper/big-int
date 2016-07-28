@@ -9,11 +9,21 @@ using namespace std;
 
 big_int::big_int(sign_t s, const big_uint & m) 
         : _sign(s)
-        , _modulus(m) { }
+        , _modulus(m) { 
+    fix_zero();
+}
 
 big_int::big_int(sign_t s, big_uint && m)
         : _sign(s)
-        , _modulus(move(m)) { }
+        , _modulus(move(m)) {
+    fix_zero();
+}
+
+big_int & big_int::fix_zero() {
+    if (_modulus == 0u)
+        _sign = sign_t::PLUS;
+    return *this;
+}
 
 big_int::big_int(sdigit x)
         : _sign(x < 0 ? sign_t::MINUS : sign_t::PLUS)
@@ -43,26 +53,31 @@ big_int & big_int::operator++() {
         ++_modulus;
     else                       
         --_modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator--() {
-    if (_sign == sign_t::PLUS) 
-        --_modulus;
-    else                       
+    if (_sign == sign_t::PLUS) {
+        if (_modulus != 0u) 
+            --_modulus;
+        else { 
+            _modulus = { 1u };
+            _sign = sign_t::MINUS;
+        }
+    } else                       
         ++_modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int big_int::operator++(int) {
     big_int prev{ *this };
-    ++*this;
+    (++*this).fix_zero();
     return prev;
 }
 
 big_int big_int::operator--(int) {
     big_int prev{ *this };
-    --*this;
+    (--*this).fix_zero();
     return prev;
 }
 
@@ -109,6 +124,8 @@ big_int operator%(sdigit lhs, const big_int & rhs) {
 }
 
 big_int & big_int::negate() {
+    if (_modulus == 0u) 
+        return *this;
     if (_sign == sign_t::PLUS)
         _sign = sign_t::MINUS;
     else
@@ -144,7 +161,7 @@ big_int & big_int::operator+=(sdigit d) {
             _modulus -= a;
         }
     }
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator-=(sdigit d) {
@@ -161,7 +178,7 @@ big_int & big_int::operator*=(sdigit d) {
     } else {
         _sign = sign_t::MINUS;
     }
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator/=(sdigit d) {
@@ -174,7 +191,7 @@ big_int & big_int::operator/=(sdigit d) {
     } else {
         _sign = sign_t::MINUS;
     }
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator%=(sdigit d) {
@@ -182,7 +199,7 @@ big_int & big_int::operator%=(sdigit d) {
     digit a;
     tie(s, a) = sign_abs(d);
     _modulus %= a;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int big_int::operator+(const big_int & rhs) const {
@@ -226,7 +243,7 @@ big_int & big_int::operator+=(const big_int & x) {
         _modulus = x._modulus - _modulus;
     } else
         _modulus -= x._modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator-=(const big_int & x) {
@@ -237,7 +254,7 @@ big_int & big_int::operator-=(const big_int & x) {
         _modulus = x._modulus - _modulus;
     } else
         _modulus -= x._modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator*=(const big_int & x) {
@@ -246,7 +263,7 @@ big_int & big_int::operator*=(const big_int & x) {
     else
         _sign = sign_t::MINUS;
     _modulus *= x._modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator/=(const big_int & x) {
@@ -256,13 +273,13 @@ big_int & big_int::operator/=(const big_int & x) {
     else
         _sign = sign_t::MINUS;
     _modulus /= x._modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 big_int & big_int::operator%=(const big_int & x) {
     if (x == 0) throw logic_error("zero division");
     _modulus %= x._modulus;
-    return *this;
+    return this->fix_zero();
 }
 
 bool big_int::operator==(const big_int & rhs) const {
