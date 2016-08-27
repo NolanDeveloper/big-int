@@ -25,7 +25,7 @@ static_assert(std::is_signed<sdigit>::value,
 
 /*
  * The class contains positive integer value of arbitrary length. The value is
- * containing as a sequence of digits in base-2^32 system.
+ * contained as a sequence of digits in base-2^32 system.
  * It doesn't overflow in multiplication and addition. 
  * Substraction greater from smaller number is undefined behaviour.
  */
