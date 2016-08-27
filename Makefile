@@ -1,7 +1,7 @@
 SOURCES := $(wildcard lib/src/*.cpp)
 
 CXX := clang++
-CXX_FLAGS := -std=c++14 -g
+CXX_FLAGS := -std=c++14 -g -Wall -Wextra -pedantic
 INC := -I./lib/include -I./test/include
 
 .PHONY: all

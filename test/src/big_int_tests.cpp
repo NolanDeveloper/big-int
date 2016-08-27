@@ -1,165 +1,117 @@
 #include "big_int.hpp"
 #include "assert.hpp"
 
+#include <cassert>
+
 using namespace std;
 using namespace big;
 
-#define TEST(left, right) { \
-        big_int x{ left }; \
-        big_int y{ right }; \
-        ASSERT(x == y && x.satisfies_invariant() && y.satisfies_invariant(), \
-               LIT(x, #left) \
-               LIT(y, #right)) \
-    }
+void test_constructors(const big_int & left, const big_int & right) {
+    assert(left == right);
+    assert(left.satisfies_invariant());
+    assert(right.satisfies_invariant());
+}
+
 void test_constructors() {
-    TEST(, 0)
-    TEST(0, "0")
-    TEST(100, "100")
-    TEST(-100, "-100")
+    test_constructors({}, { 0 });
+    test_constructors({ 0 }, { "0" });
+    test_constructors({ 100 }, { "100" });
+    test_constructors({ -100 }, { "-100" });
 }
-#undef TEST
 
-#define TEST(prev, next) { \
-        { \
-            big_int x{ prev }; \
-            big_int y{ next }; \
-            ASSERT((x++, x == y) && x.satisfies_invariant(), \
-                   LIT(x, #prev) \
-                   LIT(y, #next)); \
-        } \
-        { \
-            big_int x{ prev }; \
-            big_int y{ next }; \
-            ASSERT((++x == y) && x.satisfies_invariant(), \
-                   LIT(x, #prev) \
-                   LIT(y, #next)); \
-        } \
-        { \
-            big_int x{ next }; \
-            big_int y{ prev }; \
-            ASSERT((x--, x == y) && x.satisfies_invariant(), \
-                   LIT(x, #next) \
-                   LIT(y, #prev)); \
-        } \
-        { \
-            big_int x{ next }; \
-            big_int y{ prev }; \
-            ASSERT((--x == y) && x.satisfies_invariant(), \
-                   LIT(x, #next) \
-                   LIT(y, #prev)); \
-        } \
-    }
+void test_preincrement(big_int prev, const big_int & next) {
+    ++prev;
+    assert(prev == next);
+    assert(prev.satisfies_invariant());
+}
+
+void test_postincrement(big_int prev, const big_int & next) {
+    prev++;
+    assert(prev == next);
+    assert(prev.satisfies_invariant());
+}
+
+void test_predecrement(const big_int & prev, big_int next) {
+    --next;
+    assert(prev == next);
+    assert(next.satisfies_invariant());
+}
+
+void test_postdecrement(const big_int & prev, big_int next) {
+    next--;
+    assert(prev == next);
+    assert(next.satisfies_invariant());
+}
+
+void test_increment_and_decrement(const big_int & prev, const big_int & next) {
+    test_preincrement(prev, next);
+    test_postincrement(prev, next);
+    test_predecrement(prev, next);
+    test_postdecrement(prev, next);
+}
+
 void test_increment_and_decrement() {
-    TEST(0, 1);
-    TEST(1, 2);
-    TEST(-1, 0);
-    TEST(-2, -1);
+    test_increment_and_decrement(0, 1);
+    test_increment_and_decrement(1, 2);
+    test_increment_and_decrement(-1, 0);
+    test_increment_and_decrement(-2, -1);
 }
-#undef TEST
 
-#define TEST(augend, audend, sum) { \
-        { \
-            big_int x{ augend }; \
-            big_int y{ audend }; \
-            big_int z{ sum }; \
-            big_int t; \
-            ASSERT((t = x + y) == z && t.satisfies_invariant(), \
-                   LIT(x, #augend) \
-                   LIT(y, #audend) \
-                   LIT(z, #sum)) \
-        } \
-        { \
-            big_int x{ augend }; \
-            x = -x; \
-            big_int y{ audend }; \
-            y = -y; \
-            big_int z{ sum }; \
-            z = -z; \
-            big_int t; \
-            ASSERT((t = x + y) == z && t.satisfies_invariant(), \
-                   LIT(x, "-" #augend) \
-                   LIT(y, "-" #audend) \
-                   LIT(z, "-" #sum)) \
-        } \
-        { \
-            big_int x{ audend }; \
-            big_int y{ augend }; \
-            big_int z{ sum }; \
-            big_int t; \
-            ASSERT((t = x + y) == z && t.satisfies_invariant(), \
-                   LIT(x, #audend) \
-                   LIT(y, #augend) \
-                   LIT(z, #sum)) \
-        } \
-        { \
-            big_int x{ audend }; \
-            x = -x; \
-            big_int y{ augend }; \
-            y = -y; \
-            big_int z{ sum }; \
-            z = -z; \
-            big_int t; \
-            ASSERT((t = x + y) == z && t.satisfies_invariant(), \
-                   LIT(x, "-" #audend) \
-                   LIT(y, "-" #augend) \
-                   LIT(z, "-" #sum)) \
-        } \
-        { \
-            big_int x{ sum }; \
-            big_int y{ augend }; \
-            big_int z{ audend }; \
-            big_int t; \
-            ASSERT((t = x - y) == z && t.satisfies_invariant(), \
-                   LIT(x, #sum) \
-                   LIT(y, #augend) \
-                   LIT(z, #audend)) \
-        } \
-        { \
-            big_int x{ augend }; \
-            big_int y{ audend }; \
-            y = -y; \
-            big_int z{ sum }; \
-            big_int t; \
-            ASSERT((t = x - y) == z && t.satisfies_invariant(), \
-                   LIT(x, #augend) \
-                   LIT(y, "-" #audend) \
-                   LIT(z, #sum)) \
-        } \
-        { \
-            big_int x{ augend }; \
-            x = -x; \
-            big_int y{ audend }; \
-            big_int z{ sum }; \
-            z = -z; \
-            big_int t; \
-            ASSERT((t = x - y) == z && t.satisfies_invariant(), \
-                   LIT(x, "-" #augend) \
-                   LIT(y, #audend) \
-                   LIT(z, "-" #sum)) \
-        } \
-        { \
-            big_int x{ sum }; \
-            big_int y{ audend }; \
-            big_int z{ augend }; \
-            big_int t; \
-            ASSERT((t = x - y) == z && t.satisfies_invariant(), \
-                   LIT(x, #sum) \
-                   LIT(y, #audend) \
-                   LIT(z, #augend)) \
-        } \
-    }
-void test_addition_and_subtraction() {
-    TEST(0, 0, 0);
-    TEST(0, 1, 1);
-    TEST(0, 100, 100);
-    TEST(1, 1, 2);
-    TEST(1, 2, 3);
-    TEST(1, 100, 101);
-    TEST(2, 2, 4);
-    TEST(2, 100, 102);
-    TEST(100, 100, 200);
+void test_addition_concrete(const big_int & augend, const big_int & audend, 
+        const big_int & sum) {
+    big_int t = augend + audend;
+    assert(t == sum);
+    assert(t.satisfies_invariant());
+    t = augend;
+    t += audend;
+    assert(t == sum);
+    assert(t.satisfies_invariant());
 }
-#undef TEST
+
+void test_addition(const big_int & augend, const big_int & audend, 
+        const big_int & sum) {
+    test_addition_concrete(augend, audend, sum);
+    test_addition_concrete(audend, augend, sum);
+}
+
+void test_subtraction_concrete(const big_int & minuend, const big_int & subtrahend, 
+        const big_int & difference) {
+    big_int t = minuend - subtrahend;
+    assert(t == difference);
+    assert(t.satisfies_invariant());
+    t = minuend;
+    t -= subtrahend;
+    assert(t == difference);
+    assert(t.satisfies_invariant());
+}
+
+void test_subtraction(const big_int & augend, const big_int & audend, 
+        const big_int & sum) {
+    test_subtraction_concrete(sum, augend, audend);
+    test_subtraction_concrete(sum, audend, augend);
+}
+
+void test_addition_and_subtraction(const big_int & augend, const big_int & audend, 
+        const big_int & sum) {
+    test_addition(augend, audend, sum);
+    test_addition(sum, -audend, augend);
+    test_addition(sum, -augend, audend);
+    test_subtraction(augend, audend, sum);
+    test_subtraction(sum, -audend, augend);
+    test_subtraction(sum, -augend, audend);
+}
+
+void test_addition_and_subtraction() {
+    test_addition_and_subtraction(0, 0, 0);
+    test_addition_and_subtraction(0, 1, 1);
+    test_addition_and_subtraction(0, 100, 100);
+    test_addition_and_subtraction(1, 1, 2);
+    test_addition_and_subtraction(1, 2, 3);
+    test_addition_and_subtraction(1, 100, 101);
+    test_addition_and_subtraction(2, 2, 4);
+    test_addition_and_subtraction(2, 100, 102);
+    test_addition_and_subtraction(100, 100, 200);
+}
 
 int main() {
     cout << "big_int_tests.cpp\n";

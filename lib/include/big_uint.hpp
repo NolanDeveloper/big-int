@@ -45,6 +45,7 @@ public:
     big_uint(big_uint &&) = default;
     big_uint & operator=(const big_uint & x) = default;
     big_uint & operator=(big_uint &&) = default;
+    big_uint & operator=(digit d);
 
     const std::deque<digit> digits() const;
 

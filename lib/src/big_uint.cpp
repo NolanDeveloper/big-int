@@ -27,6 +27,12 @@ big_uint::big_uint(const std::string & num) {
     iss >> *this;
 }
 
+big_uint & big_uint::operator=(digit d) {
+    _digits.resize(1);
+    _digits[0] = d;
+    return *this;
+}
+
 const std::deque<digit> big_uint::digits() const {
     return _digits;
 }
