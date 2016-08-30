@@ -10,19 +10,19 @@ namespace big {
 
 using namespace std;
 
-big_uint::big_uint(deque<digit> digits) : _digits(digits) { 
-    while (!_digits.empty() && !_digits.back()) {
-        _digits.pop_back();
-    }
-    if (_digits.empty()) _digits.resize(1);
-}
-
 big_uint::big_uint() : _digits(1, 0) { }
 
 big_uint::big_uint(digit d) : _digits(1, d) { }
 
 big_uint::big_uint(initializer_list<digit> digits) : _digits(digits) {
     assert(satisfies_invariant());
+}
+
+big_uint::big_uint(deque<digit> digits) : _digits(digits) { 
+    while (!_digits.empty() && !_digits.back()) {
+        _digits.pop_back();
+    }
+    if (_digits.empty()) _digits.resize(1);
 }
 
 big_uint::big_uint(const std::string & num) {
@@ -386,18 +386,21 @@ big_uint big_uint::school_multiply(const big_uint & lhs, const big_uint & rhs) {
     return res;
 }
 
+/*
+ * (a + bx)(c + dx) = ac + ((a + b)(c + d) - ac - bd) * x + db * x^2
+ */
 big_uint big_uint::karatsuba_multiply(const big_uint & lhs, const big_uint & rhs) {
     if (lhs._digits.size() == 1) return lhs._digits[0] * rhs;
     if (rhs._digits.size() == 1) return rhs._digits[0] * lhs;
-    auto digit_size = min(lhs._digits.size(), rhs._digits.size()) / 2;
+    auto digit_size = max(lhs._digits.size(), rhs._digits.size()) / 2;
     auto lhs_begin = lhs._digits.begin();
     auto lhs_mid = lhs_begin + digit_size;
     auto lhs_end = lhs._digits.end();
+    big_uint a{ deque<digit>(lhs_begin, lhs_mid) };
+    big_uint b{ deque<digit>(lhs_mid, lhs_end) };
     auto rhs_begin = rhs._digits.begin();
     auto rhs_mid = rhs_begin + digit_size;
     auto rhs_end = rhs._digits.end();
-    big_uint a{ deque<digit>(lhs_begin, lhs_mid) };
-    big_uint b{ deque<digit>(lhs_mid, lhs_end) };
     big_uint c{ deque<digit>(rhs_begin, rhs_mid) };
     big_uint d{ deque<digit>(rhs_mid, rhs_end) };
     big_uint ac = a * c;
@@ -409,8 +412,8 @@ big_uint big_uint::karatsuba_multiply(const big_uint & lhs, const big_uint & rhs
 }
 
 big_uint & big_uint::operator*=(const big_uint & x) {
-    size_t min_width = min(_digits.size(), x._digits.size());
-    if (min_width < KARATSUBA_THRESHOLD) {
+    size_t max_width = max(_digits.size(), x._digits.size());
+    if (max_width < KARATSUBA_THRESHOLD) {
         return *this = school_multiply(*this, x);
     } else {
         return *this = karatsuba_multiply(*this, x);

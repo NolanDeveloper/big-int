@@ -31,21 +31,18 @@ static_assert(std::is_signed<sdigit>::value,
  * definded behaviour use big_int.
  */
 class big_uint {
-    static const size_t KARATSUBA_THRESHOLD = 10;
+    // This value was calculated using ../performance_test
+    static const size_t KARATSUBA_THRESHOLD = 400;
 
     std::deque<digit> _digits;
 
     void add_with_shift(const big_uint & x, size_t s);
 
-    static big_uint school_multiply(const big_uint & lhs, const big_uint & rhs);
-    static big_uint karatsuba_multiply(const big_uint & lhs, const big_uint & rhs);
-
-    explicit big_uint(std::deque<digit> d);
-
 public:
     big_uint();
     explicit big_uint(digit d);
     big_uint(std::initializer_list<digit> digits);
+    big_uint(std::deque<digit> d);
     big_uint(const std::string & num);
     big_uint(const big_uint &) = default;
     big_uint(big_uint &&) = default;
@@ -80,6 +77,9 @@ public:
 
     static big_uint div(const big_uint & dividend, digit divisor, digit & reminder);
     static big_uint div(const big_uint & dividend, digit divisor);
+
+    static big_uint school_multiply(const big_uint & lhs, const big_uint & rhs);
+    static big_uint karatsuba_multiply(const big_uint & lhs, const big_uint & rhs);
 
 #define COMMUTATIVE(sign) \
     return std::move(rhs sign##= lhs);
