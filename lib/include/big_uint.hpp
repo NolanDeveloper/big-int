@@ -27,12 +27,16 @@ static_assert(std::is_signed<sdigit>::value,
  * The class contains positive integer value of arbitrary length. The value is
  * contained as a sequence of digits in base-2^32 system.
  * It doesn't overflow in multiplication and addition. 
- * Substraction greater from smaller number is undefined behaviour.
+ * Substraction greater from smaller number is undefined behaviour. For well
+ * definded begahiour use big_int.
  */
 class big_uint {
     std::deque<digit> _digits;
 
     void add_with_shift(const big_uint & x, size_t s);
+
+    static big_uint subtract(const big_uint & lhs, const big_uint & rhs);
+    static big_uint multiply(const big_uint & lhs, const big_uint & rhs);
 
     big_uint(std::deque<digit> d);
 
@@ -75,11 +79,63 @@ public:
     static big_uint div(const big_uint & dividend, digit divisor, digit & reminder);
     static big_uint div(const big_uint & dividend, digit divisor);
 
-    big_uint operator+(const big_uint & x) const;
-    big_uint operator-(const big_uint & x) const;
-    big_uint operator*(const big_uint & x) const;
-    big_uint operator/(const big_uint & x) const;
-    big_uint operator%(const big_uint & x) const;
+#define COMMUTATIVE(sign) \
+    return std::move(rhs sign##= lhs);
+
+#define NONCOMMUTATIVE(sign) \
+    big_uint result = lhs; \
+    return result sign##= rhs; \
+
+#define OPERATOR(sign, commutativity) \
+    friend big_uint operator sign(big_uint && lhs, big_uint && rhs) { \
+        return std::move(lhs sign##= rhs); \
+    } \
+    friend big_uint operator sign(big_uint && lhs, const big_uint & rhs) { \
+        return std::move(lhs sign##= rhs); \
+    } \
+    friend big_uint operator sign(const big_uint & lhs, big_uint && rhs) { \
+        std::cout << "big_uint operator" #sign \
+            "(cont big_uint & lhs, big_uint && rhs);\n"; \
+        commutativity(sign) \
+    } \
+    friend big_uint operator sign(const big_uint & lhs, const big_uint & rhs) { \
+        big_uint result = lhs; \
+        return result sign##= rhs; \
+    }
+
+    OPERATOR(+, COMMUTATIVE)
+    OPERATOR(-, NONCOMMUTATIVE)
+    OPERATOR(*, COMMUTATIVE)
+    OPERATOR(/, NONCOMMUTATIVE)
+    OPERATOR(%, NONCOMMUTATIVE)
+
+#undef OPERATOR
+#undef NONCOMMUTATIVE
+#undef COMMUTATIVE
+
+    template <typename T>
+    friend big_uint operator-(T && lhs, T && rhs) {
+        big_uint result = lhs;
+        return result -= rhs;
+    }
+
+    template <typename T>
+    friend big_uint operator*(T && lhs, T && rhs) {
+        big_uint result = lhs;
+        return result *= rhs;
+    }
+
+    template <typename T>
+    friend big_uint operator/(T && lhs, T && rhs) {
+        big_uint result = lhs;
+        return result /= rhs;
+    }
+
+    template <typename T>
+    friend big_uint operator%(T && lhs, T && rhs) {
+        big_uint result = lhs;
+        return result %= rhs;
+    }
 
     big_uint & operator+=(const big_uint & x);
     big_uint & operator-=(const big_uint & x);
@@ -131,6 +187,10 @@ public:
 
     friend std::ostream & operator<<(std::ostream & os, big_uint x);
     friend std::istream & operator>>(std::istream & is, big_uint & x);
+
+    friend void swap(big_uint & lhs, big_uint & rhs) {
+        std::swap(lhs._digits, rhs._digits);
+    }
 };
 
 }
