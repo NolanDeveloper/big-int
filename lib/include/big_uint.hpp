@@ -31,11 +31,16 @@ static_assert(std::is_signed<sdigit>::value,
  * definded behaviour use big_int.
  */
 class big_uint {
+    static const size_t KARATSUBA_THRESHOLD = 10;
+
     std::deque<digit> _digits;
 
     void add_with_shift(const big_uint & x, size_t s);
 
-    big_uint(std::deque<digit> d);
+    static big_uint school_multiply(const big_uint & lhs, const big_uint & rhs);
+    static big_uint karatsuba_multiply(const big_uint & lhs, const big_uint & rhs);
+
+    explicit big_uint(std::deque<digit> d);
 
 public:
     big_uint();

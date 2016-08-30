@@ -11,7 +11,10 @@ namespace big {
 using namespace std;
 
 big_uint::big_uint(deque<digit> digits) : _digits(digits) { 
-    assert(satisfies_invariant());
+    while (!_digits.empty() && !_digits.back()) {
+        _digits.pop_back();
+    }
+    if (_digits.empty()) _digits.resize(1);
 }
 
 big_uint::big_uint() : _digits(1, 0) { }
@@ -122,7 +125,7 @@ big_uint operator+(const big_uint & lhs, digit rhs) {
     if (res.back() < rhs) {
         if (it == end) {
             res.push_back(1);
-            return { res };
+            return big_uint(res);
         } 
         res.push_back(*it + 1);
         prev = it; 
@@ -137,7 +140,7 @@ big_uint operator+(const big_uint & lhs, digit rhs) {
         res.push_back(1);
     else
         copy(it, end, back_inserter(res));
-    return { res };
+    return big_uint(res);
 }
 
 big_uint operator-(const big_uint & lhs, digit rhs) {
@@ -159,7 +162,7 @@ big_uint operator-(const big_uint & lhs, digit rhs) {
     }
     if (res.size() != 1 && res.back() == 0) 
         res.pop_back();
-    return { res };
+    return big_uint(res);
 }
 
 big_uint operator*(const big_uint & lhs, digit rhs) {
@@ -178,7 +181,7 @@ big_uint operator*(const big_uint & lhs, digit rhs) {
     }
     if (carry) 
         res.push_back(carry);
-    return { res };
+    return big_uint(res);
 }
 
 big_uint operator/(const big_uint & lhs, digit rhs) {
@@ -324,7 +327,7 @@ big_uint big_uint::div(const big_uint & dividend, digit divisor, digit & reminde
         ++it;
     }
     reminder = x;
-    return { quot };
+    return big_uint(quot);
 }
 
 big_uint big_uint::div(const big_uint & dividend, digit divisor) {
@@ -374,14 +377,44 @@ big_uint & big_uint::operator-=(const big_uint & x) {
     return *this;
 }
 
-big_uint & big_uint::operator*=(const big_uint & x) {
-    if (*this == 1u) return *this = x;
-    if (*this == 0u || x == 0u) return *this = { 0u };
+big_uint big_uint::school_multiply(const big_uint & lhs, const big_uint & rhs) {
+    if (lhs == 1u) return rhs;
+    if (lhs == 0u || rhs == 0u) return { 0u };
     big_uint res;
-    for (size_t s = 0; s < _digits.size(); ++s)
-        res.add_with_shift(x * _digits[s], s);
-    swap(*this, res);
-    return *this;
+    for (size_t s = 0; s < lhs._digits.size(); ++s)
+        res.add_with_shift(rhs * lhs._digits[s], s);
+    return res;
+}
+
+big_uint big_uint::karatsuba_multiply(const big_uint & lhs, const big_uint & rhs) {
+    if (lhs._digits.size() == 1) return lhs._digits[0] * rhs;
+    if (rhs._digits.size() == 1) return rhs._digits[0] * lhs;
+    auto digit_size = min(lhs._digits.size(), rhs._digits.size()) / 2;
+    auto lhs_begin = lhs._digits.begin();
+    auto lhs_mid = lhs_begin + digit_size;
+    auto lhs_end = lhs._digits.end();
+    auto rhs_begin = rhs._digits.begin();
+    auto rhs_mid = rhs_begin + digit_size;
+    auto rhs_end = rhs._digits.end();
+    big_uint a{ deque<digit>(lhs_begin, lhs_mid) };
+    big_uint b{ deque<digit>(lhs_mid, lhs_end) };
+    big_uint c{ deque<digit>(rhs_begin, rhs_mid) };
+    big_uint d{ deque<digit>(rhs_mid, rhs_end) };
+    big_uint ac = a * c;
+    big_uint bd = b * d;
+    big_uint result = ac;
+    result.add_with_shift((move(a) + b) * (move(c) + d) - ac - bd, digit_size);
+    result.add_with_shift(bd, 2 * digit_size);
+    return result;
+}
+
+big_uint & big_uint::operator*=(const big_uint & x) {
+    size_t min_width = min(_digits.size(), x._digits.size());
+    if (min_width < KARATSUBA_THRESHOLD) {
+        return *this = school_multiply(*this, x);
+    } else {
+        return *this = karatsuba_multiply(*this, x);
+    }
 }
 
 big_uint & big_uint::operator/=(const big_uint & x) {
