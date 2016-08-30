@@ -28,7 +28,7 @@ static_assert(std::is_signed<sdigit>::value,
  * contained as a sequence of digits in base-2^32 system.
  * It doesn't overflow in multiplication and addition. 
  * Substraction greater from smaller number is undefined behaviour. For well
- * definded begahiour use big_int.
+ * definded behaviour use big_int.
  */
 class big_uint {
     std::deque<digit> _digits;
