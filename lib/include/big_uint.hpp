@@ -35,9 +35,6 @@ class big_uint {
 
     void add_with_shift(const big_uint & x, size_t s);
 
-    static big_uint subtract(const big_uint & lhs, const big_uint & rhs);
-    static big_uint multiply(const big_uint & lhs, const big_uint & rhs);
-
     big_uint(std::deque<digit> d);
 
 public:

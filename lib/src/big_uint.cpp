@@ -74,52 +74,6 @@ void big_uint::add_with_shift(const big_uint & x, size_t s) {
     }
 }
 
-big_uint big_uint::subtract(const big_uint & lhs, const big_uint & rhs) {
-    assert(lhs >= rhs);
-    deque<digit> res;
-    size_t msd = 1; // position of last non zero digit + 1 
-    auto prev  = lhs._digits.begin();
-    auto it    = prev + 1;
-    auto end   = lhs._digits.end();
-    auto _prev = rhs._digits.begin();
-    auto _it   = _prev + 1;
-    auto _end  = rhs._digits.end();
-    bool carry = *prev < *_prev;
-    res.push_back(*prev - *_prev);
-    while (_it != _end) {
-        res.push_back(*it - *_it - carry);
-        carry = *it < *_it || (carry && *it == *_it);
-        if (res.back()) 
-            msd = res.size();
-        prev = it; 
-        ++it;      
-        _prev = _it;
-        ++_it;
-    }
-    while (carry) {
-        carry = *it == 0;
-        res.push_back(*it - 1);
-        if (res.back()) 
-            msd = res.size();
-        ++it;
-    }
-    if (it != end) {
-        copy(it, end, back_inserter(res));
-        return { res };
-    }
-    res.erase(res.begin() + msd, res.end());
-    return { res };
-}
-
-big_uint big_uint::multiply(const big_uint & lhs, const big_uint & rhs) {
-    if (lhs == 1u) return rhs;
-    if (lhs == 0u || rhs == 0u) return { 0u };
-    big_uint res;
-    for (size_t s = 0; s < lhs._digits.size(); ++s)
-        res.add_with_shift(rhs * lhs._digits[s], s);
-    return res;
-}
-
 const std::deque<digit> big_uint::digits() const {
     return _digits;
 }
@@ -421,7 +375,13 @@ big_uint & big_uint::operator-=(const big_uint & x) {
 }
 
 big_uint & big_uint::operator*=(const big_uint & x) {
-    return *this = multiply(*this, x);
+    if (*this == 1u) return *this = x;
+    if (*this == 0u || x == 0u) return *this = { 0u };
+    big_uint res;
+    for (size_t s = 0; s < _digits.size(); ++s)
+        res.add_with_shift(x * _digits[s], s);
+    swap(*this, res);
+    return *this;
 }
 
 big_uint & big_uint::operator/=(const big_uint & x) {
