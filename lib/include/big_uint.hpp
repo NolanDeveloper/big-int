@@ -91,8 +91,6 @@ public:
         return std::move(lhs sign##= rhs); \
     } \
     friend big_uint operator sign(const big_uint & lhs, big_uint && rhs) { \
-        std::cout << "big_uint operator" #sign \
-            "(cont big_uint & lhs, big_uint && rhs);\n"; \
         commutativity(sign) \
     } \
     friend big_uint operator sign(const big_uint & lhs, const big_uint & rhs) { \
