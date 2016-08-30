@@ -7,6 +7,6 @@ build/libbig_int.a: $(BIG_INT_OBJS)
 	$(AR) -rcs $@ $^
 
 build/%.o: lib/src/%.cpp
-	$(CXX) $(CXX_FLAGS) $(INC) $(LDLIBS) -c $< -o $@
+	$(CXX) -c $< -o $@ $(CXX_FLAGS) $(INC)
 	$(CXX) $(CXX_FLAGS) $(INC) -MM $< | \
 		sed 's/\(.*\.o:\)/build\/\1/g' > build/$*.d 

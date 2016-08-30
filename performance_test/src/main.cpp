@@ -27,7 +27,7 @@ big_uint get_rand_big_int(size_t length) {
     return big_uint(digits);
 }
 
-template <typename F, unsigned N = 25>
+template <typename F, unsigned N = 100>
 long measure_multiplication(size_t length, F method) {
     big_uint lhs = get_rand_big_int(length);
     big_uint rhs = get_rand_big_int(length);
