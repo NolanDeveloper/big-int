@@ -31,8 +31,7 @@ static_assert(std::is_signed<sdigit>::value,
  * definded behaviour use big_int.
  */
 class big_uint {
-    // This value was calculated using ../performance_test
-    static const size_t KARATSUBA_THRESHOLD = 400;
+    static size_t karatsuba_threshold;
 
     std::deque<digit> _digits;
 
@@ -51,6 +50,10 @@ public:
     big_uint & operator=(digit d);
 
     const std::deque<digit> digits() const;
+
+    static void set_karatsuba_threshold(size_t threshold) {
+        karatsuba_threshold = threshold;
+    }
 
     big_uint & operator++();
     big_uint & operator--();

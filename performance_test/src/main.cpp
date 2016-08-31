@@ -27,32 +27,36 @@ big_uint get_rand_big_int(size_t length) {
     return big_uint(digits);
 }
 
-template <typename F, unsigned N = 100>
-long measure_multiplication(size_t length, F method) {
+big_uint t;
+
+template <unsigned N = 200>
+long measure_multiplication(size_t length, size_t threshold) {
+    big_uint::set_karatsuba_threshold(threshold);
     big_uint lhs = get_rand_big_int(length);
     big_uint rhs = get_rand_big_int(length);
     milliseconds total_duration{ 0 };
     for (int i = 0; i < N; ++i) {
         start_measurement();
-        method(lhs, rhs);
+        t = lhs * rhs;
         total_duration += duration_cast<milliseconds>(elapsed());
     }
     return total_duration.count() / N;
 }
 
 int main() {
-    size_t begin_length = 0;
-    size_t end_length = 1024;
-    while (begin_length + 1 != end_length) {
-        size_t length = (begin_length + end_length) / 2;
-        long karatsuba_time = measure_multiplication(length, big_uint::karatsuba_multiply);
-        long school_time = measure_multiplication(length, big_uint::school_multiply);
-        if (karatsuba_time < school_time) {
-            end_length = length;
-        } else {
-            begin_length = length;
-        }
+    size_t low_threshold = 71;
+    size_t high_threshold = 320;
+    cout << setw(10) << "threshold,";
+    cout << setw(15) << "time(ms)\n";
+    for (int i = 0; i < 100; ++i) {
+        size_t threshold = low_threshold + (high_threshold + low_threshold) * i / 100;
+        long time = measure_multiplication(1024, threshold);
+        cout << setw(9) << threshold << ',';
+        cout << setw(15) << time << '\n';
     }
-    cout << "karatsuba_threshold: " << begin_length << '\n';
-    return 0;
+    if (t > 10u) {
+        return 0;
+    } else {
+        return 1;
+    }
 }

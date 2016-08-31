@@ -8,6 +8,9 @@
 
 namespace big {
 
+// Precisely calculated value. 
+size_t big_uint::karatsuba_threshold = 100;
+
 using namespace std;
 
 big_uint::big_uint() : _digits(1, 0) { }
@@ -381,8 +384,9 @@ big_uint big_uint::school_multiply(const big_uint & lhs, const big_uint & rhs) {
     if (lhs == 1u) return rhs;
     if (lhs == 0u || rhs == 0u) return { 0u };
     big_uint res;
-    for (size_t s = 0; s < lhs._digits.size(); ++s)
+    for (size_t s = 0; s < lhs._digits.size(); ++s) {
         res.add_with_shift(rhs * lhs._digits[s], s);
+    }
     return res;
 }
 
@@ -390,8 +394,10 @@ big_uint big_uint::school_multiply(const big_uint & lhs, const big_uint & rhs) {
  * (a + bx)(c + dx) = ac + ((a + b)(c + d) - ac - bd) * x + db * x^2
  */
 big_uint big_uint::karatsuba_multiply(const big_uint & lhs, const big_uint & rhs) {
-    if (lhs._digits.size() == 1) return lhs._digits[0] * rhs;
-    if (rhs._digits.size() == 1) return rhs._digits[0] * lhs;
+    // This function is useful only for big numbers.
+    assert(lhs._digits.size() > 1);
+    assert(rhs._digits.size() > 1);
+
     auto digit_size = max(lhs._digits.size(), rhs._digits.size()) / 2;
     auto lhs_begin = lhs._digits.begin();
     auto lhs_mid = lhs_begin + digit_size;
@@ -405,18 +411,17 @@ big_uint big_uint::karatsuba_multiply(const big_uint & lhs, const big_uint & rhs
     big_uint d{ deque<digit>(rhs_mid, rhs_end) };
     big_uint ac = a * c;
     big_uint bd = b * d;
-    big_uint result = ac;
-    result.add_with_shift((move(a) + b) * (move(c) + d) - ac - bd, digit_size);
-    result.add_with_shift(bd, 2 * digit_size);
-    return result;
+    ac.add_with_shift((move(a) + b) * (move(c) + d) - ac - bd, digit_size);
+    ac.add_with_shift(bd, 2 * digit_size);
+    return ac;
 }
 
 big_uint & big_uint::operator*=(const big_uint & x) {
-    size_t max_width = max(_digits.size(), x._digits.size());
-    if (max_width < KARATSUBA_THRESHOLD) {
-        return *this = school_multiply(*this, x);
-    } else {
+    size_t min_size = min(_digits.size(), x._digits.size());
+    if (min_size > karatsuba_threshold) {
         return *this = karatsuba_multiply(*this, x);
+    } else {
+        return *this = school_multiply(*this, x);
     }
 }
 
